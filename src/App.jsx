@@ -8,6 +8,7 @@ import Users from "./Pages/Users";
 import Absensi from "./Pages/Absensi";
 import Shift from "./Pages/Shift";
 import ProtectedRoute from "./middleware/ProtectRoute";
+import CatAbsen from "./Pages/CatAbsen";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
                     <Route path="/users" element={<Users />} />
                     <Route path="/retails" element={<Retail />} />
                     <Route path="/shifting" element={<Shift />} />
+                    <Route path="/typeabsen" element={<CatAbsen />} />
                   </Routes>
                 </div>
               </div>

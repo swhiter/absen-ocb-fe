@@ -131,7 +131,7 @@ const Header = () => {
                   <span className="availability-status online"></span>
                 </div>
                 <div className="nav-profile-text">
-                  <p className="mb-1 text-black">David Greymaax</p>
+                  <p className="mb-1 text-black">Nama User Dashboard</p>
                 </div>
               </a>
               <div className="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">

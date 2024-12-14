@@ -1,3 +1,5 @@
+
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -10,33 +12,32 @@ const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
 const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
-const Retail = () => {
-  const [retails, setRetails] = useState([]);
+const CatAbsen = () => {
+  const [catabsen, setcatabsen] = useState([]);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedRetail, setSelectedRetail] = useState({});
+  const [selectedCatabsen, setSelectedCatabsen] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false); // Modal untuk tambah user baru
-  const [newRetail, setNewRetail] = useState({
+  const [newCatabsen, setnewCatabsen] = useState({
     name: "",
-    latitude: "",
-    longitude: "",
-    radius: "",
-    is_active: 1,
+    description: "",
+    fee: "",
+    
   });
 
   useEffect(() => {
-    const fetchRetails = async () => {
+    const fetchcatabsen = async () => {
       setLoading(true);
       try {
         
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/retail`, { headers });
+        const response = await axios.get(`${VITE_API_URL}/absen-management`, { headers });
         const fetchedData = response.data.data || [];
         const validData = fetchedData.filter((item) => item && item.name);
-        setRetails(validData);
+        setcatabsen(validData);
         
         setError(null);
       } catch (error) {
@@ -46,7 +47,7 @@ const Retail = () => {
       }
     };
 
-    fetchRetails();
+    fetchcatabsen();
   }, []);
 
   const handleAddUser = async () => {
@@ -57,26 +58,26 @@ const Retail = () => {
       const userId = userData?.id;
 
       const response = await axios.post(
-        `${VITE_API_URL}/retail/create`,
+        `${VITE_API_URL}/absen-management/create`,
         {
-          ...newRetail,
+          ...newCatabsen,
           created_by: userId,
           created_at: DateNow,
         },
         { headers }
       );
 
-      setRetails((prev) => [...prev, response.data.data]);
+      setcatabsen((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setNewRetail({ name: "", latitude: "", longitude: "", radius: "", is_active: 1 });
+      setnewCatabsen({ name: "", latitude: "", longitude: "", radius: "", is_active: 1 });
     } catch (error) {
       Swal.fire("Error!", error.response?.data?.message || error.message, "error");
     }
   };
 
   const handleUpdate = (row) => {
-    setSelectedRetail(row);
+    setSelectedCatabsen(row);
     setModalVisible(true);
   };
 
@@ -96,13 +97,13 @@ const Retail = () => {
           const userData = JSON.parse(sessionStorage.getItem("userData"));
           const userId = userData?.id;
           const headers = { Authorization: `Bearer ${token}` };
-          const responseDelete = await axios.post(`${VITE_API_URL}/retail/delete/${row.retail_id}`,
+          const responseDelete = await axios.post(`${VITE_API_URL}/absen-management/delete/${row.retail_id}`,
             {
               deleted_by : userId,
               deleted_at: DateNow
             }, { headers });
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
-          setRetails((prev) => prev.filter((item) => item.retail_id !== row.retail_id));
+          setcatabsen((prev) => prev.filter((item) => item.retail_id !== row.retail_id));
         } catch (error) {
           Swal.fire("Error!", error.response?.data?.message || error.message, "error");
         }
@@ -117,24 +118,22 @@ const Retail = () => {
       const userData = JSON.parse(sessionStorage.getItem("userData"));
       const userId = userData?.id;
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/retail/update/${selectedRetail.retail_id}`,
+        `${VITE_API_URL}/absen-management/update/${selectedCatabsen.retail_id}`,
         {
-          name: selectedRetail.name,
-          latitude: selectedRetail.latitude,
-          longitude: selectedRetail.longitude,
-          radius: selectedRetail.radius,
-          is_active: selectedRetail.is_active,
+          name: selectedCatabsen.name,
+          description: selectedCatabsen.description,
+          fee: selectedCatabsen.fee,
           updated_by : userId,
           updated_at: DateNow
 
         },
         { headers }
       );
-      // setRetails(responseUpdate.data.data);
+      // setcatabsen(responseUpdate.data.data);
       Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
-      setRetails((prev) =>
+      setcatabsen((prev) =>
         prev.map((item) =>
-          item.retail_id === selectedRetail.retail_id ? selectedRetail : item
+          item.absen_id === selectedCatabsen.absen_id ? selectedCatabsen : item
         )
       );
       setModalVisible(false);
@@ -155,22 +154,9 @@ const Retail = () => {
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { name: "Nama Retail", selector: (row) => row.name },
-    { name: "Latitude", selector: (row) => row.latitude },
-    { name: "Longitude", selector: (row) => row.longitude },
-    { name: "Radius", selector: (row) => row.radius },
-    {
-      name: "Status",
-      cell: (row) => (
-        <span
-          className={`badge ${
-            row.is_active ? "badge-success" : "badge-danger"
-          }`}
-        >
-          {row.is_active ? "Active" : "Non Active"}
-        </span>
-      ),
-    },
+    { name: "Tipe Absen", selector: (row) => row.name },
+    { name: "Deskripsi", selector: (row) => row.description },
+    { name: "Fee", selector: (row) => row.fee },
     {
       name: "Action",
       cell: (row) => (
@@ -195,13 +181,13 @@ const Retail = () => {
   return (
     <div className="content-wrapper">
       <div className="page-header">
-        <h3 className="page-title">Data Retails</h3>
+        <h3 className="page-title">Data Tipe Absen</h3>
       </div>
       <div className="row">
         <div className="col-lg-12 grid-margin stretch-card">
           <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Table Retail / Outlet</h4>
+              <h4 className="card-title">Table Category Absen</h4>
               <div className="table-responsive">
               {loading ? (
                   <p>Loading data...</p>
@@ -214,7 +200,7 @@ const Retail = () => {
                   <button className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
                         >
-                  Add New Retail
+                  Add Tipe Absen
                 </button>
                   </div>
                   <div className="col-sm-3">
@@ -233,15 +219,15 @@ const Retail = () => {
                 </div>
                   
                     
-                    {retails && retails.length > 0 ? (
+                    {catabsen && catabsen.length > 0 ? (
                       <DataTable
-                        keyField="retail_id"
+                        keyField="absen-id"
                         columns={columns}
-                        data={retails.filter((item) => item && item.name)}
+                        data={catabsen.filter((item) => item && item.name)}
                         pagination
                       />
                     ) : (
-                      <p>No retail data available.</p>
+                      <p>No data available.</p>
                     )}
                   </>
                 )}
@@ -254,58 +240,37 @@ const Retail = () => {
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Retail</Modal.Title>
+          <Modal.Title>Add Tipe Absen</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
-            <label>Nama Retail</label>
+            <label>Katgori Absen</label>
             <input
               type="text"
               className="form-control"
-              value={newRetail.name}
-              onChange={(e) => setNewRetail({ ...newRetail, name: e.target.value })}
+              value={newCatabsen.name}
+              onChange={(e) => setnewCatabsen({ ...newCatabsen, name: e.target.value })}
             />
           </div>
           <div className="form-group">
-            <label>Latitude</label>
+            <label>Description</label>
             <input
               type="text"
               className="form-control"
-              value={newRetail.latitude}
-              onChange={(e) => setNewRetail({ ...newRetail, latitude: e.target.value })}
+              value={newCatabsen.description}
+              onChange={(e) => setnewCatabsen({ ...newCatabsen, description: e.target.value })}
             />
           </div>
           <div className="form-group">
-            <label>Longitude</label>
+            <label>fee</label>
             <input
               type="text"
               className="form-control"
-              value={newRetail.longitude}
-              onChange={(e) => setNewRetail({ ...newRetail, longitude: e.target.value })}
+              value={newCatabsen.fee}
+              onChange={(e) => setnewCatabsen({ ...newCatabsen, fee: e.target.value })}
             />
           </div>
-          <div className="form-group">
-            <label>Radius</label>
-            <input
-              type="text"
-              className="form-control"
-              value={newRetail.radius}
-              onChange={(e) => setNewRetail({ ...newRetail, radius: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Status</label>
-            <select
-              className="form-select"
-              value={newRetail.is_active}
-              onChange={(e) =>
-                setNewRetail({ ...newRetail, is_active: e.target.value === "1" ? 1 : 0 })
-              }
-            >
-              <option value="1">Active</option>
-              <option value="0">Non Active</option>
-            </select>
-          </div>
+          
         </Modal.Body>
         <Modal.Footer>
           <Button className="btn btn-light" onClick={() => setAddModalVisible(false)}>
@@ -319,86 +284,56 @@ const Retail = () => {
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update Retail</Modal.Title>
+          <Modal.Title>Update Tipe Absen</Modal.Title>
         </Modal.Header>
         <Modal.Body>
             <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Default form</h4>
-              <p className="card-description"> Basic form layout </p>
               <form className="forms-sample">
                 <div className="form-group">
-                  <label>Nama retail</label>
+                  <label>kategori Absen</label>
                   <input
                     type="text"
                     className="form-control"
-                    value={selectedRetail.name || ""}
+                    value={selectedCatabsen.name || ""}
                     onChange={(e) =>
-                      setSelectedRetail({
-                        ...selectedRetail,
+                      setSelectedCatabsen({
+                        ...selectedCatabsen,
                         name: e.target.value,
                       })
                     }
                   />
                 </div>
                 <div className="form-group">
-                  <label>Latitude</label>
+                  <label>Description</label>
                   <input
                     className="form-control"
                     type="text"
-                    value={selectedRetail.latitude || ""}
+                    value={selectedCatabsen.description || ""}
                     onChange={(e) =>
-                      setSelectedRetail({
-                        ...selectedRetail,
-                        latitude: e.target.value,
+                      setSelectedCatabsen({
+                        ...selectedCatabsen,
+                        description: e.target.value,
                       })
                     }
                   />
                 </div>
                 <div className="form-group">
-                  <label>Longitude</label>
+                  <label>Fee</label>
                   <input
                     className="form-control"
                     type="text"
-                    value={selectedRetail.longitude || ""}
+                    value={selectedCatabsen.fee || ""}
                     onChange={(e) =>
-                      setSelectedRetail({
-                        ...selectedRetail,
-                        longitude: e.target.value,
+                      setSelectedCatabsen({
+                        ...selectedCatabsen,
+                        fee: e.target.value,
                       })
                     }
                   />
                 </div>
-                <div className="form-group">
-                  <label> Radius</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    value={selectedRetail.radius || ""}
-                    onChange={(e) =>
-                      setSelectedRetail({
-                        ...selectedRetail,
-                        radius: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    className="form-select"
-                    value={selectedRetail.is_active ? "1" : "0"}
-                    onChange={(e) =>
-                      setSelectedRetail({
-                        ...selectedRetail,
-                        is_active: e.target.value === "1" ? 1 : 0,
-                      })
-                    }
-                  >
-                    <option value="1">Active</option>
-                    <option value="0">Non Active</option>
-                  </select>
-                </div>
+                
+              
               </form>
             </div>
           </div>
@@ -416,4 +351,4 @@ const Retail = () => {
   );
 };
 
-export default Retail;
+export default CatAbsen

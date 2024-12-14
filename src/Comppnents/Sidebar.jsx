@@ -14,8 +14,8 @@ const Sidebar = () => {
         
           </div>
           <div className="nav-profile-text d-flex flex-column">
-            <span className="font-weight-bold mb-2">David Grey. H</span>
-            <span className="text-secondary text-small">Project Manager</span>
+            <span className="font-weight-bold mb-2">Nama User Dashboard</span>
+            <span className="text-secondary text-small">Jabatan</span>
           </div>
           <i className="mdi mdi-bookmark-check text-success nav-profile-badge"></i>
         </a>
