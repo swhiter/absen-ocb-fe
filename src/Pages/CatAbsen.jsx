@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -50,7 +48,12 @@ const CatAbsen = () => {
     fetchcatabsen();
   }, []);
 
-  const handleAddUser = async () => {
+  const filteredCatabsen = catabsen.filter((item) =>
+    item.name?.toLowerCase().includes(search.toLowerCase()) ||
+    item.description?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleAddCatAbsen = async () => {
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
@@ -70,7 +73,7 @@ const CatAbsen = () => {
       setcatabsen((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewCatabsen({ name: "", latitude: "", longitude: "", radius: "", is_active: 1 });
+      setnewCatabsen({ name: "", description: "", fee: ""});
     } catch (error) {
       Swal.fire("Error!", error.response?.data?.message || error.message, "error");
     }
@@ -118,7 +121,7 @@ const CatAbsen = () => {
       const userData = JSON.parse(sessionStorage.getItem("userData"));
       const userId = userData?.id;
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/absen-management/update/${selectedCatabsen.retail_id}`,
+        `${VITE_API_URL}/absen-management/update/${selectedCatabsen.absen_id}`,
         {
           name: selectedCatabsen.name,
           description: selectedCatabsen.description,
@@ -154,7 +157,7 @@ const CatAbsen = () => {
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { name: "Tipe Absen", selector: (row) => row.name },
+    { name: "Code Absen", selector: (row) => row.name },
     { name: "Deskripsi", selector: (row) => row.description },
     { name: "Fee", selector: (row) => row.fee },
     {
@@ -219,11 +222,11 @@ const CatAbsen = () => {
                 </div>
                   
                     
-                    {catabsen && catabsen.length > 0 ? (
+                    {filteredCatabsen && filteredCatabsen.length > 0 ? (
                       <DataTable
                         keyField="absen-id"
                         columns={columns}
-                        data={catabsen.filter((item) => item && item.name)}
+                        data={filteredCatabsen}
                         pagination
                       />
                     ) : (
@@ -244,7 +247,7 @@ const CatAbsen = () => {
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
-            <label>Katgori Absen</label>
+            <label>Code Absen</label>
             <input
               type="text"
               className="form-control"
@@ -276,7 +279,7 @@ const CatAbsen = () => {
           <Button className="btn btn-light" onClick={() => setAddModalVisible(false)}>
             Close
           </Button>
-          <Button className="btn btn-gradient-primary me-2" onClick={handleAddUser}>
+          <Button className="btn btn-gradient-primary me-2" onClick={handleAddCatAbsen}>
             Add User
           </Button>
         </Modal.Footer>

@@ -12,9 +12,21 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    let isValid = true;
+  let errorMessage = "";
+
+  if (!username || username.trim() === "" || !password || password.trim() === "" ) {
+    isValid = false;
+    errorMessage += "Username Or Password  is required.\n";
+  }
+  if (!isValid) {
+    alert(errorMessage);
+    return; // Hentikan fungsi jika validasi gagal
+  }
+
 
     try {
-      const response = await axios.post(`${VITE_API_URL}/users/login`, {
+      const response = await axios.post(`${VITE_API_URL}/users/login-dashboard`, {
         username,
         password,
       });

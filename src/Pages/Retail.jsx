@@ -49,6 +49,10 @@ const Retail = () => {
     fetchRetails();
   }, []);
 
+  const filteredRetail= retails.filter((item) =>
+    item.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
   const handleAddUser = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -158,7 +162,7 @@ const Retail = () => {
     { name: "Nama Retail", selector: (row) => row.name },
     { name: "Latitude", selector: (row) => row.latitude },
     { name: "Longitude", selector: (row) => row.longitude },
-    { name: "Radius", selector: (row) => row.radius },
+    { name: "Radius(m)", selector: (row) => row.radius },
     {
       name: "Status",
       cell: (row) => (
@@ -233,11 +237,11 @@ const Retail = () => {
                 </div>
                   
                     
-                    {retails && retails.length > 0 ? (
+                    {filteredRetail && filteredRetail.length > 0 ? (
                       <DataTable
                         keyField="retail_id"
                         columns={columns}
-                        data={retails.filter((item) => item && item.name)}
+                        data={filteredRetail}
                         pagination
                       />
                     ) : (
@@ -287,7 +291,7 @@ const Retail = () => {
           <div className="form-group">
             <label>Radius</label>
             <input
-              type="text"
+              type="number"
               className="form-control"
               value={newRetail.radius}
               onChange={(e) => setNewRetail({ ...newRetail, radius: e.target.value })}
