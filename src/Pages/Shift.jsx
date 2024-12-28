@@ -54,11 +54,6 @@ const Shift = () => {
     fetchShifts();
   }, []);
 
-  const filteredShift= Shifts.filter((item) =>
-    item.name?.toLowerCase().includes(search.toLowerCase()) ||
-    item.retail_name?.toLowerCase().includes(search.toLowerCase()) 
-  );
-
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -351,11 +346,11 @@ const Shift = () => {
                       </div>
                     </div>
 
-                    {filteredShift && filteredShift.length > 0 ? (
+                    {Shifts && Shifts.length > 0 ? (
                       <DataTable
                         keyField="shifting_id"
                         columns={columns}
-                        data={filteredShift}
+                        data={Shifts.filter((item) => item && item.retail_name)}
                         pagination
                       />
                     ) : (

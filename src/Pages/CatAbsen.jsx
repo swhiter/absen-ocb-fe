@@ -160,6 +160,17 @@ const CatAbsen = () => {
     { name: "Code Absen", selector: (row) => row.name },
     { name: "Deskripsi", selector: (row) => row.description },
     { name: "Fee", selector: (row) => row.fee },
+    { name: "Longitude", selector: (row) => row.longitude },
+    { name: "Latitude", selector: (row) => row.latitude },
+    { name: "Radius", selector: (row) => row.radius },
+    { name: "Start Time", selector: (row) => row.start_time },
+    { name: "End Time", selector: (row) => row.end_time },
+    { name: "Group Absen", selector: (row) => row.category_user },
+
+
+
+    
+
     {
       name: "Action",
       cell: (row) => (
@@ -199,26 +210,32 @@ const CatAbsen = () => {
                 ) : (
                   <>
                 <div className="row">
-                  <div className="col-sm-9">
+                  <div className="col-sm-8">
                   <button className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
                         >
                   Add Tipe Absen
                 </button>
                   </div>
-                  <div className="col-sm-3">
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        style={{
-                          marginBottom: "10px",
-                          padding: "5px",
-                          width: "250px",
-                        }}
-                      />
-                  </div>
+                  <div className="col-sm-4">
+                        <div className="input-group">
+                          <div className="input-group-prepend bg-transparent">
+                            <i className="input-group-text border-0 mdi mdi-magnify" style={{margin: "10px",}}></i>
+                          </div>
+                          <input
+                            className="form-control bg-transparent border-0"
+                            type="text"
+                            placeholder="Search..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            style={{
+                              margin: "10px",
+                              padding: "5px",
+                              width: "200px",
+                            }}
+                          />
+                        </div>
+                      </div>
                 </div>
                   
                     
