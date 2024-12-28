@@ -322,7 +322,7 @@ const Retail = () => {
             Close
           </Button>
           <Button className="btn btn-gradient-primary me-2" onClick={handleAddUser}>
-            Add User
+            Add Retail
           </Button>
         </Modal.Footer>
       </Modal>
@@ -334,8 +334,7 @@ const Retail = () => {
         <Modal.Body>
             <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Default form</h4>
-              <p className="card-description"> Basic form layout </p>
+             
               <form className="forms-sample">
                 <div className="form-group">
                   <label>Nama retail</label>
@@ -343,7 +342,7 @@ const Retail = () => {
                     type="text"
                     className="form-control"
                     value={selectedRetail.name || ""}
-                    onChange={(e) =>
+                    onChange={(e) => 
                       setSelectedRetail({
                         ...selectedRetail,
                         name: e.target.value,

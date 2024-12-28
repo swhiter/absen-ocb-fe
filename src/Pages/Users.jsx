@@ -5,7 +5,7 @@ import DataTable from "react-data-table-component";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import { format } from "date-fns";
-import userRole from "../data/roles";
+// import userRole from "../data/roles";
 import Select from "react-select";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
@@ -18,21 +18,70 @@ const Users = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState({});
-  const [usersOption, setUsersOption] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false); // Modal untuk tambah user baru
   const [newUser, setNewUser] = useState({
     name: "",
     username: "",
     role: "",
-    category: "",
+    category_user: "",
     upline : "",
     enabled: 1,
   });
-  const [roles, setRoles] = useState([]);
-  const [selectedRoleId, setSelectedRoleId] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [role, setRole] = useState([]);
+  const [category, setCategory] = useState([]);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+        const response = await axios.get(`${VITE_API_URL}/roles`, { headers });
+        const roleOptions = response.data.data.map((role) => ({
+          value: role.role_id,
+          label: role.name_role,
+        }));
+        setRole(roleOptions);
+        if (selectedUser.role) {
+          const initialRole = roleOptions.find(
+            (role) => role.value === selectedUser.role_id
+          );
+          setSelectedRole(initialRole || null);
+        } // Sesuaikan key sesuai struktur respons API
+      } catch (error) {
+        console.error("Failed to fetch role:", error);
+      }
+    };
+
+    fetchRole();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+        const response = await axios.get(`${VITE_API_URL}/catgory-user/${selectedRole}`, { headers });
+        const roleOptions = response.data.data.map((role) => ({
+          value: role.role_id,
+          label: role.name_role,
+        }));
+        setCategory(roleOptions);
+        if (selectedUser.category_user) {
+          const initialCategory = roleOptions.find(
+            (category) => category.value === selectedUser.category_user
+          );
+          setSelectedCategory(initialCategory || null);
+        } // Sesuaikan key sesuai struktur respons API
+      } catch (error) {
+        console.error("Failed to fetch Category:", error);
+      }
+    };
+
+    fetchCategories();
+  }, [selectedRole.role_id]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -61,65 +110,25 @@ const Users = () => {
     item.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/users`, { headers });
-
-        // Ubah data ke format options untuk react-select
-        const userOptions = response.data.data.map((usersOption) => ({
-          value: usersOption.user_id,
-          label: `${usersOption.name} (${usersOption.username})`,
-        }));
-
-        setUsersOption(userOptions);
-
-        // Sinkronkan nilai awal jika ada user_id di selectedShift
-        if (selectedUser.user_id) {
-          const initialUser = userOptions.find(
-            (usersOption) => usersOption.value === selectedUser.user_id
-          );
-          setSelectedUser(initialUser || null);
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error.message);
-      }
-    };
-
-    fetchUsers();
-  }, [selectedUser.user_id]);
-
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/users/roles-with-categories`, {
-          headers,
-        });
-        setRoles(response.data);
-      } catch (error) {
-        console.error("Failed to fetch roles:", error.message);
-      }
-    };
-
-    fetchRoles();
-  }, []);
-
-  const handleRoleChange = (roleId) => {
-    setSelectedRoleId(roleId);
-    setSelectedCategoryId(""); // Reset category ketika role berubah
-  };
-
-  const handleUserChange = (selectedOption) => {
-    setSelectedUser(selectedOption);
+  
+  const handleRoleChange = (selectedOption) => {
+    setSelectedRole(selectedOption);
+    setSelectedCategory("");
     setSelectedUser({
       ...selectedUser,
-      user_id: selectedOption ? selectedOption.value : "",
+      role: selectedOption ? selectedOption.value : "",
     });
   };
+
+  const handleCategoryChange = (selectedOption) => {
+    setSelectedCategory(selectedOption);
+    setSelectedUser({
+      ...selectedUser,
+      category_user: selectedOption ? selectedOption.value : "",
+    });
+  };
+  
+  
 
   const handleAddUser = async () => {
     try {
@@ -132,22 +141,42 @@ const Users = () => {
         `${VITE_API_URL}/users/create`,
         {
           ...newUser,
-          role: selectedRoleId,
-          category: selectedCategoryId,
+          // category_user :selectedCategoryId,
+          // role : selectedRoleId,
           password : 'Oscar2024',
           created_by: userId,
           created_at: DateNow,
+          // upline: selectedUpline ? selectedUpline.value : null,
         },
         { headers }
       );
-
-      setUsers((prev) => [...prev, response.data.data]);
-      Swal.fire("Success!", `${response.data.message}`, "success");
+      const newUserWithLabel = {
+        ...response.data.data,
+        // category_user:
+        //   categories.find((cat) => cat.id_category === response.data.data.category_user)?.category_user || null,
+        // role:
+        //   roles.find((role) => role.role_id === response.data.data.role)?.label || null,
+        // upline:
+        //   uplines.find((upline) => upline.value === response.data.data.upline)?.label || null,
+      };
+      
+      setUsers((prev) => [...prev, newUserWithLabel]);
+      Swal.fire({
+        title: "Success!",
+        text: `${response.data.message}`,
+        icon: "success",
+        confirmButtonText: "OK",
+      }).then(() => {
+        // Reload halaman setelah tombol OK ditekan
+        // window.location.reload(); // Memuat ulang halaman
+      });
       setAddModalVisible(false);
-      setNewUser({ name: "", username: "", role: "", category_user:"", enabled: 1 });
+      setNewUser({ name: "", username: "", role: "", upline:"", user_category:"", enabled: 1 });
+      // window.location.reload();
     } catch (error) {
       Swal.fire("Error!", error.response?.data?.message || error.message, "error");
     }
+
   };
 
   const handleUpdate = (row) => {
@@ -197,7 +226,6 @@ const Users = () => {
           name: selectedUser.name,
           username: selectedUser.username,
           role: selectedUser.role,
-          category_user: selectedUser.category_user,
           enabled: selectedUser.enabled,
           updated_by : userId,
           updated_at: DateNow
@@ -359,52 +387,58 @@ const Users = () => {
               onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
             />
           </div>
+        
           <div className="form-group">
             <label>User Role</label>
-            <select
-              className="form-select"
-              value={newUser.selectedRoleId}
-              onChange={(e) => handleRoleChange(e.target.value)}
-            >
-              <option value="">Select Role</option>
-              {roles.map((role) => (
-                <option key={role.role_id} value={role.role_id}>
-                  {role.name_role}
-                </option>
-              ))}
-            </select>
+            <Select
+              options={role}
+              value={
+                newUser.role
+                  ? {
+                      value: newUser.role,
+                      label: role.find((u) => u.value === newUser.role)
+                        ?.label,
+                    }
+                  : null
+              }
+              onChange={(option) => {
+                setSelectedRole(option);
+                setNewUser({
+                  ...newUser,
+                  role: option ? option.value : "",
+                });
+              }}
+              placeholder="Pilih User Role..."
+              isClearable
+            />
           </div>
+
           <div className="form-group">
-            <label>Job Title</label>
-            <select
-              className="form-select"
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              disabled={!selectedRoleId} // Disable jika Role belum dipilih
-            >
-              <option value="">Select Category</option>
-              {roles
-                .find((role) => role.role_id === parseInt(selectedRoleId))
-                ?.categories.map((category) => (
-                  <option
-                    key={category.id_category}
-                    value={category.id_category}
-                  >
-                    {category.category_user}
-                  </option>
-                ))}
-            </select>
+            <label>Nama Retail</label>
+            <Select
+              options={category}
+              value={
+                newUser.retail_id
+                  ? {
+                      value: newUser.retail_id,
+                      label: category.find((r) => r.value === newUser.category_user)
+                        ?.label,
+                    }
+                  : null
+              }
+              onChange={(option) => {
+                setSelectedCategory(option);
+                setNewUser({
+                  ...newUser,
+                  category_user: option ? option.value : "",
+                });
+              }}
+              placeholder="Pilih Category User..."
+              isClearable
+            />
           </div>
-          <div className="form-group">
-                  <label>Nama Karyawan</label>
-                  <Select
-                    options={usersOption} // Data karyawan
-                    value={newUser.selectedUser} // Nilai yang dipilih
-                    onChange={handleUserChange} // Fungsi ketika berubah
-                    placeholder="Pilih Atasan..."
-                    isClearable // Tambahkan tombol untuk menghapus pilihan
-                  />
-                </div>
+
+        
         
           <div className="form-group">
             <label>Status</label>
@@ -467,25 +501,31 @@ const Users = () => {
                     }
                   />
                 </div>
+
+         
                 <div className="form-group">
-                  <label>Role</label>
-                 
-                    <select
-                    className="form-select" 
-                    value={selectedUser.role}
-                    onChange={(e) =>
-                      setSelectedUser({
-                        ...selectedUser,
-                        role: e.target.value,
-                      })
-                    }
-                  >
-                    
-                    {userRole.map((roles, index)=>(
-                    <option value={roles.value} key={index} >{roles.label}</option>
-                  ))}
-                  </select>
+                  <label> User Role</label>
+                  <Select
+                    options={role} // Data karyawan
+                    value={selectedRole} // Nilai yang dipilih
+                    onChange={handleRoleChange} // Fungsi ketika berubah
+                    placeholder="Pilih User Role..."
+                    isClearable // Tambahkan tombol untuk menghapus pilihan
+                  />
                 </div>
+
+                <div className="form-group">
+                  <label> User Category</label>
+                  <Select
+                    options={category} // Data karyawan
+                    value={selectedCategory} // Nilai yang dipilih
+                    onChange={handleCategoryChange} // Fungsi ketika berubah
+                    placeholder="Pilih User Category..."
+                    isClearable // Tambahkan tombol untuk menghapus pilihan
+                  />
+                </div>
+          
+          
                 
                
                 <div className="form-group">
