@@ -86,6 +86,10 @@ const CatAbsen = () => {
     fetchRetail();
   }, [selectedCatabsen.retail_id]);
 
+  console.log("Selected CatAbsen:", selectedCatabsen);
+console.log("Groups:", groups);
+console.log("Selected Group:", selectedGroup);
+
   useEffect(() => {
     const fetchGroup = async () => {
       try {
@@ -94,13 +98,13 @@ const CatAbsen = () => {
         const headers = { Authorization: `Bearer ${token}` };
         const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, { headers });
         const groupOptions = response.data.data.map((group) => ({
-          value: group.id_category,
+          value: group.group_absen,
           label: group.category_user,
         }));
         setGroups(groupOptions);
         if (selectedCatabsen.group_absen) {
           const initialGroup = groupOptions.find(
-            (group) => group.value === selectedCatabsen.id_category
+            (group) => group.value === selectedCatabsen.group_absen
           );
           setSelectedGroup(initialGroup || null);
         } // Sesuaikan key sesuai struktur respons API
@@ -145,7 +149,7 @@ const CatAbsen = () => {
       // setcatabsen((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewCatabsen({ name: "", description: "", fee: "", start_time:"", end_time:"", retail_id:"" });
+      setnewCatabsen({ name: "", description: "", fee: "", start_time:"", end_time:"", retail_id:"", group_absen:"" });
       setSelectedRetail(null);
     } catch (error) {
       Swal.fire(
@@ -168,6 +172,14 @@ const CatAbsen = () => {
   //     retail_id: selectedOption ? selectedOption.value : "",
   //   });
   // };
+
+  const handleGroupChange = (selectedOption) => {
+    setSelectedGroup(selectedOption);
+    setSelectedCatabsen({
+      ...selectedCatabsen,
+      group_absen: selectedOption ? selectedOption.value : "",
+    });
+  };
 
   const handleDelete = async (row) => {
     Swal.fire({
@@ -239,7 +251,7 @@ const CatAbsen = () => {
                 ...selectedCatabsen,
                 // name: users.find((u) => u.value === selectedCatabsen.user_id)?.label || "",
                 retail_name: retails.find((r) => r.value === selectedCatabsen.retail_id)?.label || "",
-                category_user: groups.find((r) => r.value === selectedCatabsen.id_category)?.label || "",
+                category_user: groups.find((r) => r.value === selectedCatabsen.group_absen)?.label || "",
 
               }
             : item
@@ -599,6 +611,42 @@ const CatAbsen = () => {
                     isClearable // Tambahkan tombol untuk menghapus pilihan
                   />
                 </div> */}
+                 {/* <div className="form-group">
+            <label>Group Absen</label>
+            <Select
+              options={groups}
+              value={
+                selectedCatabsen.group_absen
+                  ? {
+                      value: selectedCatabsen.group_absen,
+                      label: groups.find(
+                        (r) => r.value === selectedCatabsen.group_absen
+                      )?.label,
+                    }
+                  : null
+              }
+              onChange={(option) => {
+                setSelectedGroup(option);
+                setSelectedCatabsen({
+                  ...selectedCatabsen,
+                  group_absen: option ? option.value : "",
+                });
+              }}
+              placeholder="Pilih Group Absen..."
+              isClearable
+            />
+            
+          </div> */}
+          <div className="form-group">
+                  <label> Group User/ Category</label>
+                  <Select
+                    options={groups} // Data karyawan
+                    value={selectedGroup} // Nilai yang dipilih
+                    onChange={handleGroupChange} // Fungsi ketika berubah
+                    placeholder="Pilih group Category..."
+                    isClearable // Tambahkan tombol untuk menghapus pilihan
+                  />
+                </div>
             </div>
           </div>
         </Modal.Body>

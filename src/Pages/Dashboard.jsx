@@ -1,4 +1,41 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+// const now = new Date();
+// const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
+
 const Dashboard = () => {
+  const [dashboardData, setDashboardData] = useState([]);
+  const [ setError] = useState(null);
+  const [ setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+        const response = await axios.get(`${VITE_API_URL}/summary`, { headers });
+        
+        // Ambil data dari getTotalDaily
+        const fetchedData = response.data.getTotalDaily || [];
+        setDashboardData(fetchedData); 
+        setError(null);
+      } catch (error) {
+        setError(error.response?.data?.message || error.message);
+      }finally {
+      setLoading(false);
+    }
+    };
+  
+    fetchSummary();
+  }, []);
+
+
+ 
+
+
   return (
     <div className="content-wrapper">
       <div className="page-header">
@@ -18,39 +55,21 @@ const Dashboard = () => {
         </nav>
       </div>
       <div className="row">
-              <div className="col-md-4 stretch-card grid-margin">
-                <div className="card bg-gradient-danger card-img-holder text-white">
-                  <div className="card-body">
-                    <img src="/circle.svg" className="card-img-absolute" alt="circle-image" />
-                    <h4 className="font-weight-normal mb-3">Weekly Sales <i className="mdi mdi-chart-line mdi-24px float-end"></i>
-                    </h4>
-                    <h2 className="mb-5">$ 15,0000</h2>
-                    <h6 className="card-text">Increased by 60%</h6>
+      {dashboardData.map((item, index) => (
+                  <div className="col-md-4 stretch-card grid-margin" key={index}>
+                  <div className="card bg-gradient-danger card-img-holder text-white">
+                    <div className="card-body">
+                      <img src="/circle.svg" className="card-img-absolute" alt="circle-image" />
+                      <h4 className="font-weight-normal mb-3">{item.label}<i className="mdi mdi-chart-line mdi-24px float-end"></i>
+                      </h4>
+                      <h2 className="mb-5">{item.value}</h2>
+                      <h6 className="card-text">Daily Summary</h6>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="col-md-4 stretch-card grid-margin">
-                <div className="card bg-gradient-info card-img-holder text-white">
-                  <div className="card-body">
-                    <img src="/circle.svg" className="card-img-absolute" alt="circle-image" />
-                    <h4 className="font-weight-normal mb-3">Weekly Orders <i className="mdi mdi-bookmark-outline mdi-24px float-end"></i>
-                    </h4>
-                    <h2 className="mb-5">45,6334</h2>
-                    <h6 className="card-text">Decreased by 10%</h6>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-4 stretch-card grid-margin">
-                <div className="card bg-gradient-success card-img-holder text-white">
-                  <div className="card-body">
-                    <img src="/circle.svg" className="card-img-absolute" alt="circle-image" />
-                    <h4 className="font-weight-normal mb-3">Visitors Online <i className="mdi mdi-diamond mdi-24px float-end"></i>
-                    </h4>
-                    <h2 className="mb-5">95,5741</h2>
-                    <h6 className="card-text">Increased by 5%</h6>
-                  </div>
-                </div>
-              </div>
+            ))}
+              
+             
             </div>
             <div className="row">
               <div className="col-md-7 grid-margin stretch-card">
