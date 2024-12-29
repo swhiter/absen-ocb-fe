@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mui/x-data-grid": "^7.23.1",
+    "@popperjs/core": "^2.11.8",
     "ag-grid-community": "^32.3.3",
     "ag-grid-react": "^32.3.3",
     "axios": "^1.7.9",

@@ -7,8 +7,9 @@ const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState([]);
-  const [ setError] = useState(null);
-  const [ setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [fee, setFee] = useState([]);
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -31,6 +32,35 @@ const Dashboard = () => {
   
     fetchSummary();
   }, []);
+
+  useEffect(() => {
+    const fetchFee = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+        const response = await axios.get(`${VITE_API_URL}/summary/total-fee`, { headers });
+  
+        console.log("Response Data:", response.data);
+  
+        // Akses data.total_fee dari array di dalam respons
+        const fetchedFee = response.data?.data[0]?.total_fee || 0; 
+        console.log("Fetched Fee:", fetchedFee);
+  
+        setFee(fetchedFee); // Simpan nilai angka total_fee
+        setError(null);
+      } catch (error) {
+        setError(error.response?.data?.message || error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchFee();
+  }, []);
+  
+  
+  
 
 
  
@@ -56,7 +86,7 @@ const Dashboard = () => {
       </div>
       <div className="row">
       {dashboardData.map((item, index) => (
-                  <div className="col-md-4 stretch-card grid-margin" key={index}>
+                  <div className="col-md-3 stretch-card grid-margin" key={index}>
                   <div className="card bg-gradient-danger card-img-holder text-white">
                     <div className="card-body">
                       <img src="/circle.svg" className="card-img-absolute" alt="circle-image" />
@@ -68,29 +98,30 @@ const Dashboard = () => {
                   </div>
                 </div>
             ))}
+
+                <div className="col-md-3 stretch-card grid-margin" >
+                  <div className="card bg-gradient-danger card-img-holder text-white">
+                    <div className="card-body">
+                      <img src="/circle.svg" className="card-img-absolute" alt="circle-image" />
+                      <h4 className="font-weight-normal mb-3">Total fee<i className="mdi mdi-chart-line mdi-24px float-end"></i>
+                      </h4>
+                      <h2 className="mb-5">{fee || 0}</h2>
+                      <h6 className="card-text">Fee Per Month</h6>
+                    </div>
+                  </div>
+                </div>
               
              
             </div>
             <div className="row">
-              <div className="col-md-7 grid-margin stretch-card">
+              <div className="col-md-12 grid-margin stretch-card">
                 <div className="card">
                   <div className="card-body">
                     <div className="clearfix">
-                      <h4 className="card-title float-start">Visit And Sales Statistics</h4>
+                      <h4 className="card-title float-start">List Need Approval</h4>
                       <div id="visit-sale-chart-legend" className="rounded-legend legend-horizontal legend-top-right float-end"></div>
                     </div>
                     <canvas id="visit-sale-chart" className="mt-4"></canvas>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-5 grid-margin stretch-card">
-                <div className="card">
-                  <div className="card-body">
-                    <h4 className="card-title">Traffic Sources</h4>
-                    <div className="doughnutjs-wrapper d-flex justify-content-center">
-                      <canvas id="traffic-chart"></canvas>
-                    </div>
-                    <div id="traffic-chart-legend" className="rounded-legend legend-vertical legend-bottom-left pt-4"></div>
                   </div>
                 </div>
               </div>

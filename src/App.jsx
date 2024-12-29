@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import  { useState } from "react";
 import Login from "./Pages/Login";
 import Sidebar from "./Comppnents/Sidebar";
 import Header from "./Comppnents/Header";
@@ -11,6 +12,11 @@ import ProtectedRoute from "./middleware/ProtectRoute";
 import CatAbsen from "./Pages/CatAbsen";
 
 function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
   return (
     <Router>
       <Routes>
@@ -23,9 +29,9 @@ function App() {
           element={
             <ProtectedRoute >
               <div className="container-scroller">
-              <Header />
+              <Header toggleSidebar={toggleSidebar}/>
               <div className="container-fluid page-body-wrapper">
-                <Sidebar />
+                <Sidebar isSidebarOpen={isSidebarOpen} />
                 <div className="main-panel">
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
