@@ -2,9 +2,9 @@
 import { Link } from "react-router-dom";
 import navigationLinks from "../data/navigation";
 
-const Sidebar = ({ isSidebarOpen }) => {
+const Sidebar = () => {
   return (
-    <nav className={`sidebar sidebar-offcanvas ${isSidebarOpen ? "active" : ""}` } id="sidebar">
+    <nav className="sidebar sidebar-offcanvas"  id="sidebar">
     <ul className="nav">
       <li className="nav-item nav-profile">
         <a href="#" className="nav-link">
