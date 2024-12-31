@@ -1,8 +1,23 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+const VITE_API_IMAGE = import.meta.env.VITE_API_IMAGE;
 
+// const userId = userData?.id;
 const Header = () => {
+  const [name, setName] = useState(""); 
     const navigate = useNavigate();
+    useEffect(() => {
+      
+      // Ambil data user dari sessionStorage
+      const userProfile = sessionStorage.getItem("userProfile");
+     
+      if (userProfile) {
+        const userData = JSON.parse(userProfile); // Parse JSON
+        setName(userData[0]);// Ambil nama dari data
+      }
 
+      
+    }, []);
     const handleLogout = () => {
         localStorage.removeItem("token");
         alert("Logged out");
@@ -36,11 +51,11 @@ const Header = () => {
             <li className="nav-item nav-profile dropdown">
               <a className="nav-link dropdown-toggle" id="profileDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
                 <div className="nav-profile-img">
-                  <img src='/faces/face1.jpg' alt="image" />
+                  <img src={name.photo_url ? `${VITE_API_IMAGE}${name.photo_url}` : "https://via.placeholder.com/50"} alt="profile" />
                   <span className="availability-status online"></span>
                 </div>
                 <div className="nav-profile-text">
-                  <p className="mb-1 text-black">Nama User Dashboard</p>
+                  <p className="mb-1 text-black">{name.name || "Nama User Dashboard"}</p>
                 </div>
               </a>
               <div className="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">

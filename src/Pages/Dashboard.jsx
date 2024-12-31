@@ -41,11 +41,11 @@ const Dashboard = () => {
         const headers = { Authorization: `Bearer ${token}` };
         const response = await axios.get(`${VITE_API_URL}/summary/total-fee`, { headers });
   
-        console.log("Response Data:", response.data);
+        // console.log("Response Data:", response.data);
   
         // Akses data.total_fee dari array di dalam respons
         const fetchedFee = response.data?.data[0]?.total_fee || 0; 
-        console.log("Fetched Fee:", fetchedFee);
+        // console.log("Fetched Fee:", fetchedFee);
   
         setFee(fetchedFee); // Simpan nilai angka total_fee
         setError(null);

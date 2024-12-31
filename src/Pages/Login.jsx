@@ -30,15 +30,40 @@ const Login = () => {
         username,
         password,
       });
+      console.log(response)
+      if (response.data.status_code === "200") {
 
       const token = response.data.token; // JWT dari server
 
       // Simpan token di LocalStorage
       localStorage.setItem("token", token);
-
+      
       // Decode JWT dan simpan data ke sessionStorage
       const decoded = jwtDecode(token); // Mendekode token JWT
-      sessionStorage.setItem("userData", JSON.stringify(decoded)); // Menyimpan payload token ke sessionStorage
+      // console.log(token);
+      const userID = decoded.id;
+      // console.log(userID)
+      const profileResponse = await axios.post(
+        `${VITE_API_URL}/users/profile/${userID}`,
+        {}, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log(profileResponse.data.status_code)
+      if (profileResponse.data.status_code === "200" && profileResponse.data.status === "success") {
+        // 5. Simpan hasil profil ke sessionStorage
+        // console.log("masuk sini")
+        sessionStorage.setItem("userProfile", JSON.stringify(profileResponse.data.data));
+
+        // console.log("Profile berhasil disimpan ke sessionStorage", profileResponse.data.data);
+      } else {
+        console.error("Gagal mengambil profil:", profileResponse.data.message);
+      }
+    }
+
     
 
       alert("Login successful!");
@@ -48,7 +73,7 @@ const Login = () => {
       alert(error.response?.data?.message || "An error occurred");
     }
   };
-
+  
   return (
     <div className="container-scroller">
       <div className="container-fluid page-body-wrapper full-page-wrapper">

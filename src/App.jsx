@@ -10,6 +10,9 @@ import Absensi from "./Pages/Absensi";
 import Shift from "./Pages/Shift";
 import ProtectedRoute from "./middleware/ProtectRoute";
 import CatAbsen from "./Pages/CatAbsen";
+// import Bonus from "./Pages/Bonus";
+import OffDay from "./Pages/OffDay";
+// import Salary from "./Pages/Salary";
 
 function App() {
   // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -42,6 +45,9 @@ function App() {
                     <Route path="/retails" element={<Retail />} />
                     <Route path="/shifting" element={<Shift />} />
                     <Route path="/typeabsen" element={<CatAbsen />} />
+                    <Route path="/offday" element={<OffDay />} />
+                    {/* <Route path="/bonus" element={<Bonus />} />
+                    <Route path="/salary" element={<Salary />} /> */}
                   </Routes>
                 </div>
               </div>

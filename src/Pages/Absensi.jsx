@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 const VITE_API_URL = import.meta.env.VITE_API_URL;
+import Swal from "sweetalert2";
+import { format } from "date-fns";
+const now = new Date();
+const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
 const Absensi = () => {
   const [Absensies, setAbsensies] = useState([]);
@@ -43,6 +47,43 @@ const Absensi = () => {
       item.description?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleValidasi = async (row) => {
+    let is_valid = "";
+    let text ="";
+    if (row.is_valid ===1 ){
+      is_valid = 0;
+      text = "Invalidkan Absensi Ini ?"
+    }else {
+      is_valid = 1;
+      text = "validasi Absensi Ini ?"
+    }
+    Swal.fire({
+      title: "Are you sure?",
+      text: text,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes!!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem("token");
+          const headers = { Authorization: `Bearer ${token}` };
+          const responseDelete = await axios.post(`${VITE_API_URL}/absensi/validasi/${row.absensi_id}`,
+            {
+              is_valid : is_valid,
+
+            }, { headers });
+          Swal.fire("Updated!", `${responseDelete.data.message}`, "success");
+          setAbsensies((prev) => prev.filter((item) => item.user_id !== row.user_id));
+        } catch (error) {
+          Swal.fire("Error!", error.response?.data?.message || error.message, "error");
+        }
+      }
+    });
+  };
+
   const columns = [
     {
       name: "#",
@@ -58,8 +99,24 @@ const Absensi = () => {
       selector: (row) => row.retail_name,
     },
     { name: "Code Absen", selector: (row) => row.category_absen },
+    { name: "Waktu Absen", selector: (row) => format(new Date(row.absen_time), "yyyy-MM-dd HH:mm:ss") },
     { name: "Deskripsi", selector: (row) => row.description },
     { name: "Fee", selector: (row) => row.fee },
+    {
+      name: "Status",
+      cell: (row) => (
+        <button
+          className={`btn btn-sm ${
+            row.is_valid ? "btn-gradient-success" : "btn-gradient-danger"
+          }`}
+          onClick={() => {
+              handleValidasi(row);
+          }}
+        >
+          {row.is_valid ? "Valid" : "Invalid"}
+        </button>
+      ),
+    },
   ];
 
   return (
