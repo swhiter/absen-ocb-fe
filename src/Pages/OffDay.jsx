@@ -20,15 +20,15 @@ const OffDay = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false); // Modal untuk tambah user baru
   const [newoffDay, setnewoffDay] = useState({
-    name: "",
+    user_id: "",
     type_off: "",
     tanggal: "",
     reason: "",
   });
-  const [retails, setRetails] = useState([]);
-  const [selectedRetail, setSelectedRetail] = useState(null);
-  const [groups, setGroups] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [typeOff, settypeOff] = useState([]);
+  const [selectedTypeOff, setSelectedTypeOff] = useState(null);
+  const [users, setusers] = useState([]);
+  const [selecteduser, setSelecteduser] = useState(null);
 
   useEffect(() => {
     const fetchoffDay = async () => {
@@ -61,69 +61,75 @@ const OffDay = () => {
   );
 
   useEffect(() => {
-    const fetchRetail = async () => {
+    const fetchTypeOff = async () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/retail`, { headers });
-        const retailOptions = response.data.data.map((retail) => ({
-          value: retail.retail_id,
-          label: retail.name,
+        const response = await axios.get(
+          `${VITE_API_URL}/management/type-off`,
+          { headers }
+        );
+        const typeoffOptions = response.data.data.map((typeoff) => ({
+          value: typeoff.id,
+          label: typeoff.type_off,
         }));
-        setRetails(retailOptions);
-        if (selectedoffDay.retail_id) {
-          const initialRetail = retailOptions.find(
-            (retail) => retail.value === selectedoffDay.retail_id
+        settypeOff(typeoffOptions);
+        if (selectedoffDay.id_type_off) {
+          const initialTypeOff = typeoffOptions.find(
+            (typeoff) => typeoff.value === selectedoffDay.id_type_off
           );
-          setSelectedRetail(initialRetail || null);
+          setSelectedTypeOff(initialTypeOff || null);
         } // Sesuaikan key sesuai struktur respons API
       } catch (error) {
         console.error("Failed to fetch retail:", error);
       }
     };
 
-    fetchRetail();
-  }, [selectedoffDay.retail_id]);
+    fetchTypeOff();
+  }, [selectedoffDay.id_type_off]);
 
   console.log("Selected offDay:", selectedoffDay);
-console.log("Groups:", groups);
-console.log("Selected Group:", selectedGroup);
+  console.log("typeoff:", typeOff);
+  console.log("Selected typeoff", selectedTypeOff);
 
   useEffect(() => {
-    const fetchGroup = async () => {
+    const fetchuser = async () => {
       try {
-        
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, { headers });
-        const groupOptions = response.data.data.map((group) => ({
-          value: group.group_absen,
-          label: group.category_user,
+        const response = await axios.get(`${VITE_API_URL}/users`, { headers });
+        const userOptions = response.data.data.map((user) => ({
+          value: user.user_id,
+          label: user.name,
         }));
-        setGroups(groupOptions);
-        if (selectedoffDay.group_absen) {
-          const initialGroup = groupOptions.find(
-            (group) => group.value === selectedoffDay.group_absen
+        setusers(userOptions);
+        if (selectedoffDay.user_id) {
+          const initialuser = userOptions.find(
+            (user) => user.value === selectedoffDay.user_id
           );
-          setSelectedGroup(initialGroup || null);
+          setSelecteduser(initialuser || null);
         } // Sesuaikan key sesuai struktur respons API
       } catch (error) {
-        console.error("Failed to fetch group:", error);
+        console.error("Failed to fetch user:", error);
       }
     };
 
-    fetchGroup();
-  },[selectedoffDay.group_absen] );
+    fetchuser();
+  }, [selectedoffDay.user_id]);
 
   const handleAddoffDay = async () => {
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const userData = JSON.parse(sessionStorage.getItem("userData"));
-      const userId = userData?.id;
+      const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
+
+      //   const userData = JSON.parse(sessionStorage.getItem("userData"));
+      //   const userId = userData?.id;
 
       const response = await axios.post(
-        `${VITE_API_URL}/absen-management/create`,
+        `${VITE_API_URL}/management/addoffday`,
         {
           ...newoffDay,
           created_by: userId,
@@ -132,24 +138,25 @@ console.log("Selected Group:", selectedGroup);
         { headers }
       );
       // Ambil data baru dari respons API
-      const addedAbsen = response.data.data;
-  
+      const addedOffday = response.data.data;
+
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setoffDay((prev) => [
         ...prev,
         {
-          ...addedAbsen,
+          ...addedOffday,
           // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
-          retail_name: retails.find((r) => r.value === addedAbsen.retail_id)?.label || "", // Nama retail
-          category_user: groups.find((r) => r.value === addedAbsen.group_absen)?.label || "",
+          type_off:
+            typeOff.find((r) => r.value === addedOffday.type_off)?.label || "", // Nama retail
+          name: users.find((r) => r.value === addedOffday.user_id)?.label || "",
         },
       ]);
 
       // setoffDay((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewoffDay({ name: "", description: "", fee: "", start_time:"", end_time:"", retail_id:"", group_absen:"" });
-      setSelectedRetail(null);
+      setnewoffDay({ user_id: "", tanggal: "", type_off: "", reason: "" });
+      setSelectedTypeOff(null);
     } catch (error) {
       Swal.fire(
         "Error!",
@@ -172,32 +179,41 @@ console.log("Selected Group:", selectedGroup);
   //   });
   // };
 
-  const handleGroupChange = (selectedOption) => {
-    setSelectedGroup(selectedOption);
+  const handleuserChange = (selectedOption) => {
+    setSelecteduser(selectedOption);
     setSelectedoffDay({
       ...selectedoffDay,
-      group_absen: selectedOption ? selectedOption.value : "",
+      user_id: selectedOption ? selectedOption.value : "",
+    });
+  };
+
+  const handleTypeoffChange = (selectedOption) => {
+    setSelectedTypeOff(selectedOption);
+    setSelectedoffDay({
+      ...selectedoffDay,
+      id_type_off: selectedOption ? selectedOption.value : "",
     });
   };
 
   const handleDelete = async (row) => {
     Swal.fire({
-      title: "Are you sure?",
-      text: `Delete Retail : ${row.name} ?`,
+      title: "Kamu Yakin ?",
+      text: `Delete Off Day untuk User : ${row.name} ?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonText: "Ya, Hapus!",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           const token = localStorage.getItem("token");
-          const userData = JSON.parse(sessionStorage.getItem("userData"));
-          const userId = userData?.id;
+          const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
-            `${VITE_API_URL}/absen-management/delete/${row.retail_id}`,
+            `${VITE_API_URL}/management/deleteoffday/${row.id_off}`,
             {
               deleted_by: userId,
               deleted_at: DateNow,
@@ -206,7 +222,7 @@ console.log("Selected Group:", selectedGroup);
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
           setoffDay((prev) =>
-            prev.filter((item) => item.retail_id !== row.retail_id)
+            prev.filter((item) => item.id_off !== row.id_off)
           );
         } catch (error) {
           Swal.fire(
@@ -223,39 +239,40 @@ console.log("Selected Group:", selectedGroup);
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const userData = JSON.parse(sessionStorage.getItem("userData"));
-      const userId = userData?.id;
+      const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/absen-management/update/${selectedoffDay.absen_id}`,
+        `${VITE_API_URL}/management/updateoffday/${selectedoffDay.id_off}`,
         {
-          name: selectedoffDay.name,
-          description: selectedoffDay.description,
-          fee: selectedoffDay.fee,
-          retail_id : selectedoffDay.retail_id,
-          start_time : selectedoffDay.start_time,
-          end_time : selectedoffDay.end_time,
-          group_absen : selectedoffDay.group_absen,
+          user_id: selectedoffDay.user_id,
+          tanggal: selectedoffDay.tanggal,
+          type_off: selectedoffDay.id_type_off,
+          reason: selectedoffDay.reason,
           updated_by: userId,
           updated_at: DateNow,
         },
         { headers }
       );
       //const updatedAbsen = responseUpdate.data.data;
-  
+
       // Tambahkan data baru ke state dengan format yang sesuai tabel
-      setoffDay((prevAbsen =>
-        prevAbsen.map((item) =>
-          item.absen_id === selectedoffDay.absen_id
+      setoffDay((prevOffday) =>
+        prevOffday.map((item) =>
+          item.id_off === selectedoffDay.id_off
             ? {
                 ...selectedoffDay,
                 // name: users.find((u) => u.value === selectedoffDay.user_id)?.label || "",
-                retail_name: retails.find((r) => r.value === selectedoffDay.retail_id)?.label || "",
-                category_user: groups.find((r) => r.value === selectedoffDay.group_absen)?.label || "",
-
+                type_off:
+                  typeOff.find((r) => r.value === selectedoffDay.id_type_off)
+                    ?.label || "",
+                name:
+                  users.find((r) => r.value === selectedoffDay.user_id)
+                    ?.label || "",
               }
             : item
         )
-      ));
+      );
       // setoffDay(responseUpdate.data.data);
       Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
       // setoffDay((prev) =>
@@ -280,10 +297,12 @@ console.log("Selected Group:", selectedGroup);
       width: "50px",
     },
     { name: "Nama Karyawan", selector: (row) => row.name },
-    { name: "Tanggal", selector: (row) => row.tanggal },
+    {
+      name: "Tanggal",
+      selector: (row) => format(new Date(row.tanggal), "yyyy-MM-dd"),
+    },
     { name: "Tipe Off", selector: (row) => row.type_off },
     { name: "Keterangan", selector: (row) => row.reason },
-
 
     {
       name: "Action",
@@ -309,13 +328,13 @@ console.log("Selected Group:", selectedGroup);
   return (
     <div className="content-wrapper">
       <div className="page-header">
-        <h3 className="page-title">Managament Fee</h3>
+        <h3 className="page-title">Management Hari Libur</h3>
       </div>
       <div className="row">
         <div className="col-lg-12 grid-margin stretch-card">
           <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Table Fee Managament</h4>
+              <h4 className="card-title">Table Hari Libur</h4>
               <div className="table-responsive">
                 {loading ? (
                   <p>Loading data...</p>
@@ -381,16 +400,30 @@ console.log("Selected Group:", selectedGroup);
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
-            <label>Nama Karyawan</label>
-            <input
-              type="text"
-              className="form-control"
-              value={newoffDay.name}
-              onChange={(e) =>
-                setnewoffDay({ ...newoffDay, name: e.target.value })
+            <label>Karyawan</label>
+            <Select
+              options={users}
+              value={
+                newoffDay.user_id
+                  ? {
+                      value: newoffDay.user_id,
+                      label: users.find((r) => r.value === newoffDay.user_id)
+                        ?.label,
+                    }
+                  : null
               }
+              onChange={(option) => {
+                setSelecteduser(option);
+                setnewoffDay({
+                  ...newoffDay,
+                  user_id: option ? option.value : "",
+                });
+              }}
+              placeholder="Pilih Karyawan..."
+              isClearable
             />
           </div>
+
           <div className="form-group">
             <label>Tanggal</label>
             <input
@@ -405,41 +438,38 @@ console.log("Selected Group:", selectedGroup);
           <div className="form-group">
             <label>Kategori Libur</label>
             <Select
-              options={retails}
+              options={typeOff}
               value={
-                newoffDay.retail_id
+                newoffDay.type_off
                   ? {
-                      value: newoffDay.retail_id,
-                      label: retails.find(
-                        (r) => r.value === newoffDay.retail_id
-                      )?.label,
+                      value: newoffDay.type_off,
+                      label: typeOff.find((r) => r.value === newoffDay.type_off)
+                        ?.label,
                     }
                   : null
               }
               onChange={(option) => {
-                setSelectedRetail(option);
+                setSelectedTypeOff(option);
                 setnewoffDay({
                   ...newoffDay,
-                  retail_id: option ? option.value : "",
+                  type_off: option ? option.value : "",
                 });
               }}
-              placeholder="Pilih Retail..."
+              placeholder="Pilih Kategori tidak Masuk..."
               isClearable
             />
           </div>
           <div className="form-group">
-            <label>Tanggal</label>
+            <label>Keterangan </label>
             <textarea
               type="text"
               className="form-control"
-              value={newoffDay.tanggal}
+              value={newoffDay.reason}
               onChange={(e) =>
-                setnewoffDay({ ...newoffDay, tanggal: e.target.value })
+                setnewoffDay({ ...newoffDay, reason: e.target.value })
               }
             />
           </div>
-         
-          
         </Modal.Body>
         <Modal.Footer>
           <Button
@@ -452,108 +482,74 @@ console.log("Selected Group:", selectedGroup);
             className="btn btn-gradient-primary me-2"
             onClick={handleAddoffDay}
           >
-            Add Type Absen
+            Tambah
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update Tipe Absen</Modal.Title>
+          <Modal.Title>Update Off</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">
             <div className="card-body">
-                <div className="form-group">
-                  <label>kategori Absen</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={selectedoffDay.name || ""}
-                    onChange={(e) =>
-                      setSelectedoffDay({
-                        ...selectedoffDay,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Description</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    value={selectedoffDay.description || ""}
-                    onChange={(e) =>
-                      setSelectedoffDay({
-                        ...selectedoffDay,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Fee</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    value={selectedoffDay.fee || ""}
-                    onChange={(e) =>
-                      setSelectedoffDay({
-                        ...selectedoffDay,
-                        fee: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-            <label>Start Time</label>
-            <input
-              type="time"
-              className="form-control"
-              value={selectedoffDay.start_time}
-              onChange={(e) =>
-                setSelectedoffDay({ ...selectedoffDay, start_time: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
-            <label>End Time</label>
-            <input
-              type="time"
-              className="form-control"
-              value={selectedoffDay.end_time}
-              onChange={(e) =>
-                setSelectedoffDay({ ...selectedoffDay, end_time: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
-            <label>Nama Retail</label>
-            <Select
-              options={retails}
-              value={
-                selectedoffDay.retail_id
-                  ? {
-                      value: selectedoffDay.retail_id,
-                      label: retails.find(
-                        (r) => r.value === selectedoffDay.retail_id
-                      )?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelectedRetail(option);
-                setSelectedoffDay({
-                  ...selectedoffDay,
-                  retail_id: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih Retail..."
-              isClearable
-            />
-          </div>
-          {/* <div className="form-group">
+              <div className="form-group">
+                <label> Karyawan</label>
+                <Select
+                  options={users} // Data karyawan
+                  value={selecteduser} // Nilai yang dipilih
+                  onChange={handleuserChange} // Fungsi ketika berubah
+                  placeholder="Pilih Karyawan..."
+                  isClearable // Tambahkan tombol untuk menghapus pilihan
+                />
+              </div>
+              <div className="form-group">
+                <label>Tanggal</label>
+                <input
+                  className="form-control"
+                  type="date"
+                  value={
+                    selectedoffDay.tanggal
+                      ? new Date(selectedoffDay.tanggal)
+                          .toISOString()
+                          .split("T")[0] // Format ke yyyy-MM-dd
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setSelectedoffDay({
+                      ...selectedoffDay,
+                      tanggal: e.target.value, // Nilai langsung dari input date
+                    })
+                  }
+                />
+              </div>
+              
+              <div className="form-group">
+                <label> Kageori Libur</label>
+                <Select
+                  options={typeOff} // Data karyawan
+                  value={selectedTypeOff} // Nilai yang dipilih
+                  onChange={handleTypeoffChange} // Fungsi ketika berubah
+                  placeholder="Pilih kategory Libur..."
+                  isClearable // Tambahkan tombol untuk menghapus pilihan
+                />
+              </div>
+              <div className="form-group">
+                <label>Keterangan</label>
+                <textarea
+                  type="text"
+                  className="form-control"
+                  value={selectedoffDay.reason}
+                  onChange={(e) =>
+                    setSelectedoffDay({
+                      ...selectedoffDay,
+                      reason: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              {/* <div className="form-group">
                   <label> Retail / Outlet</label>
                   <Select
                     options={retails} // Data karyawan
@@ -563,42 +559,32 @@ console.log("Selected Group:", selectedGroup);
                     isClearable // Tambahkan tombol untuk menghapus pilihan
                   />
                 </div> */}
-                 {/* <div className="form-group">
-            <label>Group Absen</label>
+              {/* <div className="form-group">
+            <label>user Absen</label>
             <Select
-              options={groups}
+              options={users}
               value={
-                selectedoffDay.group_absen
+                selectedoffDay.user_absen
                   ? {
-                      value: selectedoffDay.group_absen,
-                      label: groups.find(
-                        (r) => r.value === selectedoffDay.group_absen
+                      value: selectedoffDay.user_absen,
+                      label: users.find(
+                        (r) => r.value === selectedoffDay.user_absen
                       )?.label,
                     }
                   : null
               }
               onChange={(option) => {
-                setSelectedGroup(option);
+                setSelecteduser(option);
                 setSelectedoffDay({
                   ...selectedoffDay,
-                  group_absen: option ? option.value : "",
+                  user_absen: option ? option.value : "",
                 });
               }}
-              placeholder="Pilih Group Absen..."
+              placeholder="Pilih user Absen..."
               isClearable
             />
             
           </div> */}
-          <div className="form-group">
-                  <label> Group User/ Category</label>
-                  <Select
-                    options={groups} // Data karyawan
-                    value={selectedGroup} // Nilai yang dipilih
-                    onChange={handleGroupChange} // Fungsi ketika berubah
-                    placeholder="Pilih group Category..."
-                    isClearable // Tambahkan tombol untuk menghapus pilihan
-                  />
-                </div>
             </div>
           </div>
         </Modal.Body>

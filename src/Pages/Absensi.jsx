@@ -70,13 +70,17 @@ const Absensi = () => {
         try {
           const token = localStorage.getItem("token");
           const headers = { Authorization: `Bearer ${token}` };
-          const responseDelete = await axios.post(`${VITE_API_URL}/absensi/validasi/${row.absensi_id}`,
+          const responseValidasi = await axios.post(`${VITE_API_URL}/absensi/validasi/${row.absensi_id}`,
             {
               is_valid : is_valid,
 
             }, { headers });
-          Swal.fire("Updated!", `${responseDelete.data.message}`, "success");
-          setAbsensies((prev) => prev.filter((item) => item.user_id !== row.user_id));
+          Swal.fire("Updated!", `${responseValidasi.data.message}`, "success");
+          setAbsensies((prev) =>
+            prev.map((item) =>
+              item.absensi_id === row.absensi_id ? { ...item, is_valid } : item
+            )
+          );
         } catch (error) {
           Swal.fire("Error!", error.response?.data?.message || error.message, "error");
         }

@@ -159,6 +159,8 @@ const Shift = () => {
       );
     }
   };
+
+  console.log("Selected Shift:", selectedShift);
   
 
   const handleUpdate = (row) => {
@@ -179,9 +181,11 @@ const Shift = () => {
     setSelectedRetail(selectedOption);
     setSelectedShift({
       ...selectedShift,
-      retail_id: selectedOption ? selectedOption.value : "",
+      retail_id: selectedOption ? parseInt(selectedOption.value, 10) : null, // Konversi ke integer
     });
   };
+
+  
 
   const handleDelete = async (row) => {
     Swal.fire({
@@ -328,7 +332,7 @@ const Shift = () => {
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
                         >
-                          Add New Shift
+                          Tambah Shift
                         </button>
                       </div>
                       <div className="col-sm-3">
@@ -354,7 +358,7 @@ const Shift = () => {
                         pagination
                       />
                     ) : (
-                      <p>No Shift data available.</p>
+                      <p>List Shift tidak tersedia</p>
                     )}
                   </>
                 )}
@@ -367,7 +371,7 @@ const Shift = () => {
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Shift</Modal.Title>
+          <Modal.Title>Tambah dat Shift</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
@@ -453,14 +457,14 @@ const Shift = () => {
             className="btn btn-gradient-primary me-2"
             onClick={handleAddShift}
           >
-            Add User
+            Tambah Shift
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update Shift</Modal.Title>
+          <Modal.Title>Update Data Shift</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">
@@ -508,7 +512,7 @@ const Shift = () => {
                   <label> Retail / Outlet</label>
                   <Select
                     options={retails} // Data karyawan
-                    value={selectedRetail} // Nilai yang dipilih
+                    value={retails.find((retails) => retails.value === parseInt(selectedShift.retail_id, 10)) || null} // Nilai yang dipilih
                     onChange={handleRetailChange} // Fungsi ketika berubah
                     placeholder="Pilih retail..."
                     isClearable // Tambahkan tombol untuk menghapus pilihan
@@ -529,7 +533,7 @@ const Shift = () => {
             className="btn btn-gradient-primary me-2"
             onClick={handleSaveUpdate}
           >
-            Save Changes
+            Simpan Perubahan
           </Button>
         </Modal.Footer>
       </Modal>

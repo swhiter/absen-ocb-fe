@@ -198,7 +198,7 @@ console.log("Selected Group:", selectedGroup);
           const userId = userData?.id;
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
-            `${VITE_API_URL}/absen-management/delete/${row.retail_id}`,
+            `${VITE_API_URL}/absen-management/delete/${row.absen_id}`,
             {
               deleted_by: userId,
               deleted_at: DateNow,
@@ -207,7 +207,7 @@ console.log("Selected Group:", selectedGroup);
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
           setcatabsen((prev) =>
-            prev.filter((item) => item.retail_id !== row.retail_id)
+            prev.filter((item) => item.absen_id !== row.absen_id)
           );
         } catch (error) {
           Swal.fire(
@@ -408,7 +408,7 @@ console.log("Selected Group:", selectedGroup);
           <div className="form-group">
             <label>fee</label>
             <input
-              type="text"
+              type="number"
               className="form-control"
               value={newCatabsen.fee}
               onChange={(e) =>
@@ -544,7 +544,7 @@ console.log("Selected Group:", selectedGroup);
                   <label>Fee</label>
                   <input
                     className="form-control"
-                    type="text"
+                    type="number"
                     value={selectedCatabsen.fee || ""}
                     onChange={(e) =>
                       setSelectedCatabsen({

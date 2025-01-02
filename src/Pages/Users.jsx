@@ -79,9 +79,9 @@ const Users = () => {
         setUplines(userOptions);
 
         // Sinkronkan nilai awal jika ada user_id di selectedShift
-        if (selectedUser.upline) {
+        if (selectedUser.id_upline) {
           const initialUser = userOptions.find(
-            (upline) => upline.value === selectedUser.upline
+            (upline) => upline.value === selectedUser.id_upline
           );
           setSelectedUpline(initialUser || null);
         }
@@ -91,7 +91,7 @@ const Users = () => {
     };
 
     fetchUpline();
-  }, [selectedUser.upline]);
+  }, [selectedUser.id_upline]);
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -109,6 +109,7 @@ const Users = () => {
 
     fetchRoles();
   }, []);
+  console.log("Selected selectedUser:", selectedUser);
 
   const handleRoleChange = (roleId) => {
     setSelectedRoleId(roleId);
@@ -119,7 +120,7 @@ const Users = () => {
     setSelectedUpline(selectedOption);
     setNewUser({
       ...newUser,
-      upline: selectedOption ? selectedOption.value : null, // Pastikan data upline terupdate
+      id_upline: selectedOption ? selectedOption.value : null, // Pastikan data upline terupdate
     });
   };
 
@@ -138,7 +139,6 @@ const Users = () => {
           ...newUser,
           category_user :selectedCategoryId,
           role : selectedRoleId,
-          password : 'Oscar2024',
           created_by: userId,
           created_at: DateNow,
           upline: selectedUpline ? selectedUpline.value : null,
@@ -150,9 +150,9 @@ const Users = () => {
         // category_user:
         //   categories.find((cat) => cat.id_category === response.data.data.category_user)?.category_user || null,
         role:
-          roles.find((role) => role.value === response.data.data.role)?.label || null,
+          roles.find((role) => role.value === response.data.data.role_id)?.label || null,
         upline:
-          uplines.find((upline) => upline.value === response.data.data.upline)?.label || null,
+          uplines.find((upline) => upline.value === response.data.data.id_upline)?.label || null,
       };
       
       setUsers((prev) => [...prev, newUserWithLabel]);
@@ -309,13 +309,13 @@ const Users = () => {
   return (
     <div className="content-wrapper">
       <div className="page-header">
-        <h3 className="page-title">Data Users</h3>
+        <h3 className="page-title">Data Karyawan</h3>
       </div>
       <div className="row">
         <div className="col-lg-12 grid-margin stretch-card">
           <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Table Users</h4>
+              <h4 className="card-title">Table List Karyawan</h4>
               <div className="table-responsive">
               {loading ? (
                   <p>Loading data...</p>
@@ -328,7 +328,7 @@ const Users = () => {
                   <button className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
                         >
-                  Add New User
+                  Tambah Karyawan
                 </button>
                   </div>
                   <div className="col-sm-4">
@@ -361,7 +361,7 @@ const Users = () => {
                         pagination
                       />
                     ) : (
-                      <p>No User data available.</p>
+                      <p>Data Karaywan tidak tersedia.</p>
                     )}
                   </>
                 )}
@@ -374,11 +374,11 @@ const Users = () => {
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add User</Modal.Title>
+          <Modal.Title>Tambah Karyawan</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
-            <label>Nama User</label>
+            <label>Nama Karyawan</label>
             <input
               type="text"
               className="form-control"
@@ -433,9 +433,9 @@ const Users = () => {
           </div>
 
           <div className="form-group">
-                  <label>Nama Karyawan</label>
+                  <label>Nama Atasan</label>
                   <Select
-                    options={uplines} // Data karyawan
+                    options={uplines} // Data Atasan
                     value={selectedUpline} // Nilai yang dipilih
                     onChange={handleUserChange} // Fungsi ketika berubah
                     placeholder="Pilih Atasan..."
@@ -463,14 +463,14 @@ const Users = () => {
             Close
           </Button>
           <Button className="btn btn-gradient-primary me-2" onClick={handleAddUser}>
-            Add User
+            Tambah Karyawan
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update User</Modal.Title>
+          <Modal.Title>Edit Data Karyawan</Modal.Title>
         </Modal.Header>
         <Modal.Body>
             <div className="card">
@@ -478,7 +478,7 @@ const Users = () => {
         
               <form className="forms-sample">
                 <div className="form-group">
-                  <label>Nama User</label>
+                  <label>Nama Karyawan</label>
                   <input
                     type="text"
                     className="form-control"
@@ -510,7 +510,7 @@ const Users = () => {
             <label>User Role</label>
             <select
               className="form-select"
-              value={selectedUser.role}
+              value={selectedUser.role_id}
               onChange={(e) =>
                 setSelectedUser({
                   ...selectedUser,
@@ -530,7 +530,7 @@ const Users = () => {
             <label>Job Title</label>
             <select
               className="form-select"
-              value={selectedUser.user_category}
+              value={selectedUser.id_category}
               onChange={(e) =>
                 setSelectedUser({
                   ...selectedUser,

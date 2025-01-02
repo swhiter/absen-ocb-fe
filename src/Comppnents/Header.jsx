@@ -59,8 +59,8 @@ const Header = () => {
                 </div>
               </a>
               <div className="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">
-                <a className="dropdown-item" href="#">
-                  <i className="mdi mdi-cached me-2 text-success"></i> Activity Log </a>
+                {/* <a className="dropdown-item" href="#">
+                  <i className="mdi mdi-cached me-2 text-success"></i> Activity Log </a> */}
                 <div className="dropdown-divider"></div>
                 <a className="dropdown-item" onClick={(handleLogout)}>
                   <i className="mdi mdi-logout me-2 text-primary"></i> LogOut </a>
