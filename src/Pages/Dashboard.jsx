@@ -22,9 +22,16 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fee, setFee] = useState([]);
-  const [chartData, setChartData] = useState({});
+  const [chartData, setChartData] =  useState({
+    labels: [],
+    datasets:[],});
 
   useEffect(() => {
+    fetchSummary();
+    fetchcatabsen();
+    fetchFee();
+  }, []);
+
     const fetchcatabsen = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -73,8 +80,8 @@ const Dashboard = () => {
       }
     };
   
-    fetchcatabsen();
-  }, []);
+    
+
   
   
 
@@ -101,20 +108,22 @@ const chartData1 = {
 };
 
   // Data untuk Line Chart
-  const lineChartData = {
-    labels: ['Toko A', 'Toko B', 'Toko C'],
-    datasets: [
-      {
-        label: 'Total Fee',
-        data: [300000, 250000, 400000],
-        borderColor: 'rgba(153, 102, 255, 1)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        tension: 0.4, // Membuat garis sedikit melengkung
-      },
-    ],
-  };
+  // const lineChartData = {
+  //   labels: ['Toko A', 'Toko B', 'Toko C'],
+  //   datasets: [
+  //     {
+  //       label: 'Total Fee',
+  //       data: [300000, 250000, 400000],
+  //       borderColor: 'rgba(153, 102, 255, 1)',
+  //       backgroundColor: 'rgba(153, 102, 255, 0.2)',
+  //       tension: 0.4, // Membuat garis sedikit melengkung
+  //     },
+  //   ],
+  // };
 
-  useEffect(() => {
+
+
+
     const fetchSummary = async () => {
       setLoading(true);
       try {
@@ -135,16 +144,13 @@ const chartData1 = {
       }
     };
 
-    fetchSummary();
-  }, []);
-
-  useEffect(() => {
+    
     const fetchFee = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/summary/total-fee`, {
+        const response = await axios.get(`${VITE_API_URL}/summary/total-feedaily`, {
           headers,
         });
 
@@ -163,8 +169,7 @@ const chartData1 = {
       }
     };
 
-    fetchFee();
-  }, []);
+
 
   return (
     <div className="content-wrapper">
@@ -218,13 +223,13 @@ const chartData1 = {
                 <i className="mdi mdi-chart-line mdi-24px float-end"></i>
               </h4>
               <h2 className="mb-5">{fee || 0}</h2>
-              <h6 className="card-text">Fee Per Month</h6>
+              <h6 className="card-text">Total Fee Hari ini</h6>
             </div>
           </div>
         </div>
       </div>
       <div className="row">
-        <div className="col-md-6 grid-margin stretch-card">
+        <div className="col-md-12 grid-margin stretch-card">
           <div className="card">
             <div className="card-body">
             <div className="clearfix">
@@ -243,7 +248,7 @@ const chartData1 = {
               //     },
               //   }}
               // />
-              data={chartData1}
+              data={chartData}
         options={{
           responsive: true,
           plugins: {
@@ -264,7 +269,7 @@ const chartData1 = {
             </div>
           </div>
         </div>
-        <div className="col-md-6 grid-margin stretch-card">
+        {/* <div className="col-md-6 grid-margin stretch-card">
           <div className="card">
             <div className="card-body">
             <div className="clearfix">
@@ -284,8 +289,8 @@ const chartData1 = {
               </div>
             </div>
           </div>
-        </div>
-        <canvas id="visit-sale-chart" className="mt-4"></canvas>
+        </div> */}
+    
       </div>
     </div>
   );

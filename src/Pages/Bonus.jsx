@@ -28,28 +28,49 @@ const Bonus = () => {
   const [selecteduser, setSelecteduser] = useState(null);
 
   useEffect(() => {
-    const fetchbonus = async () => {
-      setLoading(true);
+    const fetchData = async () => {
       try {
+        setLoading(true);
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/management/bonus`, {
+  
+        // Fetch bonus data
+        const bonusResponse = await axios.get(`${VITE_API_URL}/management/bonus`, {
           headers,
         });
-        const fetchedData = response.data.data || [];
-        const validData = fetchedData.filter((item) => item && item.name);
-        setbonus(validData);
-
+        const bonusData = bonusResponse.data.data || [];
+        const validBonusData = bonusData.filter((item) => item && item.name);
+        setbonus(validBonusData);
+  
+        // Fetch user data
+        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
+        const userOptions = userResponse.data.data.map((user) => ({
+          value: user.user_id,
+          label: user.name,
+        }));
+        setusers(userOptions);
+  
+        // Set selected user if `selectedbonus.user_id` exists
+        if (selectedbonus.user_id) {
+          const initialuser = userOptions.find(
+            (user) => user.value === selectedbonus.user_id
+          );
+          setSelecteduser(initialuser || null);
+        }
+  
+        // Clear errors
         setError(null);
       } catch (error) {
         setError(error.response?.data?.message || error.message);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchbonus();
-  }, []);
+  
+    fetchData();
+  }, [selectedbonus.user_id]);
+  
 
   const filteredbonus = bonus.filter(
     (item) =>
@@ -61,30 +82,7 @@ const Bonus = () => {
   console.log("Selected bonus:", selectedbonus);
 
 
-  useEffect(() => {
-    const fetchuser = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/users`, { headers });
-        const userOptions = response.data.data.map((user) => ({
-          value: user.user_id,
-          label: user.name,
-        }));
-        setusers(userOptions);
-        if (selectedbonus.user_id) {
-          const initialuser = userOptions.find(
-            (user) => user.value === selectedbonus.user_id
-          );
-          setSelecteduser(initialuser || null);
-        } // Sesuaikan key sesuai struktur respons API
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      }
-    };
-
-    fetchuser();
-  }, [selectedbonus.user_id]);
+  
 
   const handleAddbonus = async () => {
     try {

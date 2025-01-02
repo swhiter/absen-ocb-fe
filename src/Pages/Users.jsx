@@ -289,12 +289,12 @@ const Users = () => {
       name: "Action",
       cell: (row) => (
         <div style={{ display: "flex", gap: "10px" }}>
-          <button
+          {/* <button
             className="btn btn-gradient-warning btn-sm"
             onClick={() => handleUpdate(row)}
           >
             Update
-          </button>
+          </button> */}
           <button
             className="btn btn-gradient-danger btn-sm"
             onClick={() => handleDelete(row)}

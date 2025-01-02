@@ -114,7 +114,7 @@ console.log("Selected Group:", selectedGroup);
     };
 
     fetchGroup();
-  },[selectedCatabsen.group_absen] );
+  },[selectedCatabsen.group_absen], );
 
   const handleAddCatAbsen = async () => {
     try {
