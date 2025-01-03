@@ -218,7 +218,7 @@ const Retail = () => {
                   <button className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
                         >
-                  Add New Retail
+                  Tambah Retail
                 </button>
                   </div>
                   <div className="col-sm-4">
@@ -264,7 +264,7 @@ const Retail = () => {
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Retail</Modal.Title>
+          <Modal.Title>Form Tambah Retail</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
@@ -322,14 +322,14 @@ const Retail = () => {
             Close
           </Button>
           <Button className="btn btn-gradient-primary me-2" onClick={handleAddUser}>
-            Add Retail
+            Tambah Retail
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update Retail</Modal.Title>
+          <Modal.Title>Form Edit Retail</Modal.Title>
         </Modal.Header>
         <Modal.Body>
             <div className="card">
@@ -417,7 +417,7 @@ const Retail = () => {
             Close
           </Button>
           <Button className="btn btn-gradient-primary me-2" onClick={handleSaveUpdate}>
-            Save Changes
+            Simpan Perubahan
           </Button>
         </Modal.Footer>
       </Modal>

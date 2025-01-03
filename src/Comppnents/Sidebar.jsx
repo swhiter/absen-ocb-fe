@@ -4,7 +4,7 @@ import navigationLinks from "../data/navigation";
 import { useState, useEffect } from "react";
 const VITE_API_IMAGE = import.meta.env.VITE_API_IMAGE;
 
-const Sidebar = () => {
+const Sidebar = ({ isSidebarOpen }) => {
   const [name, setName] = useState([]);
     useEffect(() => {
         
@@ -20,10 +20,10 @@ const Sidebar = () => {
       }, []);
 
   return (
-    <nav className="sidebar sidebar-offcanvas"  id="sidebar">
+    <nav className={`sidebar sidebar-offcanvas ${isSidebarOpen ? "active" : ""}`}  id="sidebar">
     <ul className="nav">
       <li className="nav-item nav-profile">
-        <a href="#" className="nav-link">
+        <a  className="nav-link">
           <div className="nav-profile-image">
             <img src={name.photo_url ? `${VITE_API_IMAGE}${name.photo_url}` : "https://via.placeholder.com/50"} alt="profile" />
             <span className="login-status online"></span>

@@ -120,8 +120,10 @@ console.log("Selected Group:", selectedGroup);
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const userData = JSON.parse(sessionStorage.getItem("userData"));
-      const userId = userData?.id;
+      const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
+
 
       const response = await axios.post(
         `${VITE_API_URL}/absen-management/create`,
@@ -194,8 +196,10 @@ console.log("Selected Group:", selectedGroup);
       if (result.isConfirmed) {
         try {
           const token = localStorage.getItem("token");
-          const userData = JSON.parse(sessionStorage.getItem("userData"));
-          const userId = userData?.id;
+          const userProfile = sessionStorage.getItem("userProfile");
+          const userData = JSON.parse(userProfile); // Parse JSON
+          const userId = userData[0]?.user_id;
+    
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
             `${VITE_API_URL}/absen-management/delete/${row.absen_id}`,
@@ -224,8 +228,10 @@ console.log("Selected Group:", selectedGroup);
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const userData = JSON.parse(sessionStorage.getItem("userData"));
-      const userId = userData?.id;
+      const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
+
       const responseUpdate = await axios.post(
         `${VITE_API_URL}/absen-management/update/${selectedCatabsen.absen_id}`,
         {
@@ -318,7 +324,7 @@ console.log("Selected Group:", selectedGroup);
         <div className="col-lg-12 grid-margin stretch-card">
           <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Table Category Absen</h4>
+              <h4 className="card-title">Table Kategori Absen</h4>
               <div className="table-responsive">
                 {loading ? (
                   <p>Loading data...</p>
@@ -332,7 +338,7 @@ console.log("Selected Group:", selectedGroup);
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
                         >
-                          Add Tipe Absen
+                          Tambah Tipe Absen
                         </button>
                       </div>
                       <div className="col-sm-4">
@@ -380,7 +386,7 @@ console.log("Selected Group:", selectedGroup);
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Tipe Absen</Modal.Title>
+          <Modal.Title>Form Tambah Tipe Absen</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
@@ -500,14 +506,14 @@ console.log("Selected Group:", selectedGroup);
             className="btn btn-gradient-primary me-2"
             onClick={handleAddCatAbsen}
           >
-            Add Type Absen
+            Tambah Tipe Absen
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update Tipe Absen</Modal.Title>
+          <Modal.Title>Edit Tipe Absen</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">
@@ -661,7 +667,7 @@ console.log("Selected Group:", selectedGroup);
             className="btn btn-gradient-primary me-2"
             onClick={handleSaveUpdate}
           >
-            Save Changes
+            Simpan Perubahan
           </Button>
         </Modal.Footer>
       </Modal>

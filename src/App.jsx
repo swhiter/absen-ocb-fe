@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import  { useState } from "react";
+import  { useState } from "react";
 import Login from "./Pages/Login";
 import Sidebar from "./Comppnents/Sidebar";
 import Header from "./Comppnents/Header";
@@ -15,11 +15,11 @@ import OffDay from "./Pages/OffDay";
 import Salary from "./Pages/Salary";
 
 function App() {
-  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // const toggleSidebar = () => {
-  //   setIsSidebarOpen(!isSidebarOpen);
-  // };
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
   return (
     <Router>
       <Routes>
@@ -32,11 +32,11 @@ function App() {
           element={
             <ProtectedRoute >
               <div className="container-scroller">
-              {/* <Header toggleSidebar={toggleSidebar}/> */}
-              <Header />
+              <Header toggleSidebar={toggleSidebar}/>
+              {/* <Header /> */}
               <div className="container-fluid page-body-wrapper">
-                {/* <Sidebar isSidebarOpen={isSidebarOpen} /> */}
-                <Sidebar />
+                <Sidebar isSidebarOpen={isSidebarOpen} />
+                {/* <Sidebar /> */}
                 <div className="main-panel">
                   <Routes>
                     <Route path="/" element={<Dashboard />} />

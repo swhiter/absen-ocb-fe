@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import { jwtDecode} from "jwt-decode"; // Perbaikan impor
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
@@ -66,11 +67,17 @@ const Login = () => {
 
     
 
-      alert("Login successful!");
+     Swal.fire("Login Success!", `Welcome to Dahsboard OCB`, "success");
       navigate("/");
     } catch (error) {
+
       console.error("Login failed:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "An error occurred");
+      // alert(error.response?.data?.message || "An error occurred");
+      Swal.fire(
+              "Error!",
+              error.response?.data?.message || error.message,
+              "error"
+            );
     }
   };
   

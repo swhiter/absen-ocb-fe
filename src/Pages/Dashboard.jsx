@@ -85,29 +85,29 @@ const Dashboard = () => {
   
   
 
-  
-const chartData1 = {
-  labels: ['AdithCollection', 'khunStore123', 'MisLa Store'],
-  datasets: [
-    {
-      label: 'Total Absensi',
-      data: [4, 3, 1],
-      backgroundColor: 'rgba(75, 192, 192, 0.6)',
-    },
-    {
-      label: 'Total Ontime',
-      data: [1, 0, 0],
-      backgroundColor: 'rgba(75, 192, 192, 0.6)',
-    },
-    {
-      label: 'Total Late',
-      data: [3, 3, 1],
-      backgroundColor: 'rgba(255, 99, 132, 0.6)',
-    },
-  ],
-};
+  //data Dummy 
+// const chartData1 = {
+//   labels: ['AdithCollection', 'khunStore123', 'MisLa Store'],
+//   datasets: [
+//     {
+//       label: 'Total Absensi',
+//       data: [4, 3, 1],
+//       backgroundColor: 'rgba(75, 192, 192, 0.6)',
+//     },
+//     {
+//       label: 'Total Ontime',
+//       data: [1, 0, 0],
+//       backgroundColor: 'rgba(75, 192, 192, 0.6)',
+//     },
+//     {
+//       label: 'Total Late',
+//       data: [3, 3, 1],
+//       backgroundColor: 'rgba(255, 99, 132, 0.6)',
+//     },
+//   ],
+// };
 
-  // Data untuk Line Chart
+  // Data Dummy untuk Line Chart
   // const lineChartData = {
   //   labels: ['Toko A', 'Toko B', 'Toko C'],
   //   datasets: [

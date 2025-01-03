@@ -300,7 +300,7 @@ const Bonus = () => {
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
                         >
-                          Tambah Bonus Karyawan
+                          Tambah Bonus/Punishment
                         </button>
                       </div>
                       <div className="col-sm-4">
@@ -348,7 +348,7 @@ const Bonus = () => {
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Tambah Bonus</Modal.Title>
+          <Modal.Title>Tambah Bonus/Punishment</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
@@ -376,7 +376,7 @@ const Bonus = () => {
             />
           </div>
           <div className="form-group">
-            <label>Bonus </label>
+            <label>Bonus/Punishment </label>
             <input
               type="number"
               className="form-control"
@@ -412,14 +412,14 @@ const Bonus = () => {
             className="btn btn-gradient-primary me-2"
             onClick={handleAddbonus}
           >
-            Tambah Bonus
+            Tambah
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update Bonus</Modal.Title>
+          <Modal.Title>Update Bonus/Punishment</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">
@@ -435,7 +435,7 @@ const Bonus = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Bonus</label>
+                <label>Bonus/Punishment</label>
                 <textarea
                   type="number"
                   className="form-control"

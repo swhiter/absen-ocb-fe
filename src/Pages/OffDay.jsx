@@ -31,91 +31,70 @@ const OffDay = () => {
   const [selecteduser, setSelecteduser] = useState(null);
 
   useEffect(() => {
-    const fetchoffDay = async () => {
+    const fetchData = async () => {
       setLoading(true);
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+  
       try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/management/offday`, {
-          headers,
-        });
-        const fetchedData = response.data.data || [];
-        const validData = fetchedData.filter((item) => item && item.name);
-        setoffDay(validData);
-
+        // Fetch Off Day
+        const offDayResponse = await axios.get(`${VITE_API_URL}/management/offday`, { headers });
+        const fetchedOffDayData = offDayResponse.data.data || [];
+        const validOffDayData = fetchedOffDayData.filter((item) => item && item.name);
+        setoffDay(validOffDayData);
+  
+        // Fetch Type Off
+        const typeOffResponse = await axios.get(`${VITE_API_URL}/management/type-off`, { headers });
+        const typeOffOptions = typeOffResponse.data.data.map((typeoff) => ({
+          value: typeoff.id,
+          label: typeoff.type_off,
+        }));
+        settypeOff(typeOffOptions);
+  
+        if (selectedoffDay.id_type_off) {
+          const initialTypeOff = typeOffOptions.find(
+            (typeoff) => typeoff.value === selectedoffDay.id_type_off
+          );
+          setSelectedTypeOff(initialTypeOff || null);
+        }
+  
+        // Fetch Users
+        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
+        const userOptions = userResponse.data.data.map((user) => ({
+          value: user.user_id,
+          label: user.name,
+        }));
+        setusers(userOptions);
+  
+        if (selectedoffDay.user_id) {
+          const initialUser = userOptions.find(
+            (user) => user.value === selectedoffDay.user_id
+          );
+          setSelecteduser(initialUser || null);
+        }
+        
         setError(null);
       } catch (error) {
         setError(error.response?.data?.message || error.message);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchoffDay();
-  }, []);
-
+  
+    fetchData();
+  }, [selectedoffDay.id_type_off, selectedoffDay.user_id]);
+  
+  // Filtered OffDay
   const filteredoffDay = offDay.filter(
     (item) =>
       item.name?.toLowerCase().includes(search.toLowerCase()) ||
       item.description?.toLowerCase().includes(search.toLowerCase())
   );
-
-  useEffect(() => {
-    const fetchTypeOff = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(
-          `${VITE_API_URL}/management/type-off`,
-          { headers }
-        );
-        const typeoffOptions = response.data.data.map((typeoff) => ({
-          value: typeoff.id,
-          label: typeoff.type_off,
-        }));
-        settypeOff(typeoffOptions);
-        if (selectedoffDay.id_type_off) {
-          const initialTypeOff = typeoffOptions.find(
-            (typeoff) => typeoff.value === selectedoffDay.id_type_off
-          );
-          setSelectedTypeOff(initialTypeOff || null);
-        } // Sesuaikan key sesuai struktur respons API
-      } catch (error) {
-        console.error("Failed to fetch retail:", error);
-      }
-    };
-
-    fetchTypeOff();
-  }, [selectedoffDay.id_type_off]);
-
+  
   console.log("Selected offDay:", selectedoffDay);
-  console.log("typeoff:", typeOff);
-  console.log("Selected typeoff", selectedTypeOff);
-
-  useEffect(() => {
-    const fetchuser = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/users`, { headers });
-        const userOptions = response.data.data.map((user) => ({
-          value: user.user_id,
-          label: user.name,
-        }));
-        setusers(userOptions);
-        if (selectedoffDay.user_id) {
-          const initialuser = userOptions.find(
-            (user) => user.value === selectedoffDay.user_id
-          );
-          setSelecteduser(initialuser || null);
-        } // Sesuaikan key sesuai struktur respons API
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      }
-    };
-
-    fetchuser();
-  }, [selectedoffDay.user_id]);
+  console.log("typeOff:", typeOff);
+  console.log("Selected typeOff:", selectedTypeOff);
 
   const handleAddoffDay = async () => {
     try {
@@ -489,7 +468,7 @@ const OffDay = () => {
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Update Off</Modal.Title>
+          <Modal.Title>Edit Hari Libur</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">
@@ -599,7 +578,7 @@ const OffDay = () => {
             className="btn btn-gradient-primary me-2"
             onClick={handleSaveUpdate}
           >
-            Save Changes
+            Simpan Perubahan
           </Button>
         </Modal.Footer>
       </Modal>

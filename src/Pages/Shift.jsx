@@ -31,18 +31,50 @@ const Shift = () => {
   });
 
   useEffect(() => {
-    const fetchShifts = async () => {
+    const fetchData = async () => {
       setLoading(true);
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+  
       try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/shift-management`, {
-          headers,
-        });
-        const fetchedData = response.data.data || [];
-        const validData = fetchedData.filter((item) => item && item.name);
-        setShifts(validData);
-
+        // Fetch Shifts
+        const shiftResponse = await axios.get(`${VITE_API_URL}/shift-management`, { headers });
+        const shiftData = shiftResponse.data.data || [];
+        const validShifts = shiftData.filter((item) => item && item.name);
+        setShifts(validShifts);
+  
+        // Fetch Users
+        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
+        const userOptions = userResponse.data.data.map((user) => ({
+          value: user.user_id,
+          label: `${user.name} (${user.username})`,
+        }));
+        setUsers(userOptions);
+  
+        // Sync initial user if exists
+        if (selectedShift.user_id) {
+          const initialUser = userOptions.find(
+            (user) => user.value === selectedShift.user_id
+          );
+          setSelectedUser(initialUser || null);
+        }
+  
+        // Fetch Retails
+        const retailResponse = await axios.get(`${VITE_API_URL}/retail`, { headers });
+        const retailOptions = retailResponse.data.data.map((retail) => ({
+          value: retail.retail_id,
+          label: retail.name,
+        }));
+        setRetails(retailOptions);
+  
+        // Sync initial retail if exists
+        if (selectedShift.retail_id) {
+          const initialRetail = retailOptions.find(
+            (retail) => retail.value === selectedShift.retail_id
+          );
+          setSelectedRetail(initialRetail || null);
+        }
+  
         setError(null);
       } catch (error) {
         setError(error.response?.data?.message || error.message);
@@ -50,72 +82,103 @@ const Shift = () => {
         setLoading(false);
       }
     };
+  
+    fetchData();
+  }, [selectedShift.user_id, selectedShift.retail_id]);
 
-    fetchShifts();
-  }, []);
+  const filteredShift = Shifts.filter(
+    (item) =>
+      item.name?.toLowerCase().includes(search.toLowerCase()) ||
+      item.retail_name?.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  //old
+  // useEffect(() => {
+  //   const fetchShifts = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const token = localStorage.getItem("token");
+  //       const headers = { Authorization: `Bearer ${token}` };
+  //       const response = await axios.get(`${VITE_API_URL}/shift-management`, {
+  //         headers,
+  //       });
+  //       const fetchedData = response.data.data || [];
+  //       const validData = fetchedData.filter((item) => item && item.name);
+  //       setShifts(validData);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/users`, { headers });
+  //       setError(null);
+  //     } catch (error) {
+  //       setError(error.response?.data?.message || error.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-        // Ubah data ke format options untuk react-select
-        const userOptions = response.data.data.map((user) => ({
-          value: user.user_id,
-          label: `${user.name} (${user.username})`,
-        }));
+  //   fetchShifts();
+  // }, []);
 
-        setUsers(userOptions);
+  // useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+  //       const headers = { Authorization: `Bearer ${token}` };
+  //       const response = await axios.get(`${VITE_API_URL}/users`, { headers });
 
-        // Sinkronkan nilai awal jika ada user_id di selectedShift
-        if (selectedShift.user_id) {
-          const initialUser = userOptions.find(
-            (user) => user.value === selectedShift.user_id
-          );
-          setSelectedUser(initialUser || null);
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error.message);
-      }
-    };
+  //       // Ubah data ke format options untuk react-select
+  //       const userOptions = response.data.data.map((user) => ({
+  //         value: user.user_id,
+  //         label: `${user.name} (${user.username})`,
+  //       }));
 
-    fetchUsers();
-  }, [selectedShift.user_id]);
+  //       setUsers(userOptions);
 
-  useEffect(() => {
-    const fetchRetail = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/retail`, { headers });
-        const retailOptions = response.data.data.map((retail) => ({
-          value: retail.retail_id,
-          label: retail.name,
-        }));
-        setRetails(retailOptions);
-        if (selectedShift.retail_id) {
-          const initialRetail = retailOptions.find(
-            (retail) => retail.value === selectedShift.retail_id
-          );
-          setSelectedRetail(initialRetail || null);
-        } // Sesuaikan key sesuai struktur respons API
-      } catch (error) {
-        console.error("Failed to fetch retail:", error);
-      }
-    };
+  //       // Sinkronkan nilai awal jika ada user_id di selectedShift
+  //       if (selectedShift.user_id) {
+  //         const initialUser = userOptions.find(
+  //           (user) => user.value === selectedShift.user_id
+  //         );
+  //         setSelectedUser(initialUser || null);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching users:", error.message);
+  //     }
+  //   };
 
-    fetchRetail();
-  }, [selectedShift.retail_id]);
+  //   fetchUsers();
+  // }, [selectedShift.user_id]);
+
+  // useEffect(() => {
+  //   const fetchRetail = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+  //       const headers = { Authorization: `Bearer ${token}` };
+  //       const response = await axios.get(`${VITE_API_URL}/retail`, { headers });
+  //       const retailOptions = response.data.data.map((retail) => ({
+  //         value: retail.retail_id,
+  //         label: retail.name,
+  //       }));
+  //       setRetails(retailOptions);
+  //       if (selectedShift.retail_id) {
+  //         const initialRetail = retailOptions.find(
+  //           (retail) => retail.value === selectedShift.retail_id
+  //         );
+  //         setSelectedRetail(initialRetail || null);
+  //       } // Sesuaikan key sesuai struktur respons API
+  //     } catch (error) {
+  //       console.error("Failed to fetch retail:", error);
+  //     }
+  //   };
+
+  //   fetchRetail();
+  // }, [selectedShift.retail_id]);
 
   const handleAddShift = async () => {
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const userData = JSON.parse(sessionStorage.getItem("userData"));
-      const userId = userData?.id;
-  
+      const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
       const response = await axios.post(
         `${VITE_API_URL}/shift-management/create`,
         {
@@ -131,12 +194,12 @@ const Shift = () => {
   
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setShifts((prev) => [
-        ...prev,
+        
         {
           ...addedShift,
           name: users.find((u) => u.value === addedShift.user_id)?.label || "", // Nama user
           retail_name: retails.find((r) => r.value === addedShift.retail_id)?.label || "", // Nama retail
-        },
+        },...prev,
       ]);
   
       Swal.fire("Success!", `${response.data.message}`, "success");
@@ -200,8 +263,9 @@ const Shift = () => {
       if (result.isConfirmed) {
         try {
           const token = localStorage.getItem("token");
-          const userData = JSON.parse(sessionStorage.getItem("userData"));
-          const userId = userData?.id;
+          const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           await axios.post(
             `${VITE_API_URL}/shift-management/delete/${row.shifting_id}`,
@@ -230,8 +294,9 @@ const Shift = () => {
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const userData = JSON.parse(sessionStorage.getItem("userData"));
-      const userId = userData?.id;
+      const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
   
       const responseUpdate = await axios.post(
         `${VITE_API_URL}/shift-management/update/${selectedShift.shifting_id}`,
@@ -350,11 +415,11 @@ const Shift = () => {
                       </div>
                     </div>
 
-                    {Shifts && Shifts.length > 0 ? (
+                    {filteredShift && filteredShift.length > 0 ? (
                       <DataTable
                         keyField="shifting_id"
                         columns={columns}
-                        data={Shifts.filter((item) => item && item.retail_name)}
+                        data={filteredShift}
                         pagination
                       />
                     ) : (

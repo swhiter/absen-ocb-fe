@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 const VITE_API_URL = import.meta.env.VITE_API_URL;
+const VITE_API_IMAGE = import.meta.env.VITE_API_IMAGE;
 import Swal from "sweetalert2";
 import { format } from "date-fns";
 const now = new Date();
@@ -12,6 +13,8 @@ const Absensi = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedImageAbsensi, setSelectedImageAbsensi] = useState(null);
+  const [isModalOpenAbsensi, setIsModalOpenAbsensi] = useState(false);
 
   useEffect(() => {
     const fetchAbsensies = async () => {
@@ -46,6 +49,16 @@ const Absensi = () => {
       item.category_absen?.toLowerCase().includes(search.toLowerCase()) ||
       item.description?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleImageAbsensiClick = (imageUrl) => {
+    setSelectedImageAbsensi(imageUrl);
+    setIsModalOpenAbsensi(true);
+  };
+
+  const closeAbsensiModal = () => {
+    setSelectedImageAbsensi(null);
+    setIsModalOpenAbsensi(false);
+  };
 
   const handleValidasi = async (row) => {
     let is_valid = "";
@@ -106,6 +119,46 @@ const Absensi = () => {
     { name: "Waktu Absen", selector: (row) => format(new Date(row.absen_time), "yyyy-MM-dd HH:mm:ss") },
     { name: "Deskripsi", selector: (row) => row.description },
     { name: "Fee", selector: (row) => row.fee },
+    // {
+    //   name: "Photo",
+    //   cell: (row) => (
+    //     <div>
+    //       <img
+    //          src={row?.photo_url ? `${VITE_API_IMAGE}${row?.photo_url}` : "https://via.placeholder.com/50"}
+    //          alt="Profile"
+    //         style={{ width: "50px", height: "50px", borderRadius: "10%" }}
+    //       />
+    //     </div>
+    //   ),
+    // },
+    {
+      name: "Photo",
+      cell: (row) => (
+        <div>
+          <img
+            src={
+              row?.photo_url
+                ? `${VITE_API_IMAGE}${row.photo_url}`
+                : "https://via.placeholder.com/50"
+            }
+            alt="Profile"
+            style={{
+              width: "50px",
+              height: "50px",
+              borderRadius: "10%",
+              cursor: "pointer",
+            }}
+            onClick={() =>
+              handleImageAbsensiClick(
+                row?.photo_url
+                  ? `${VITE_API_IMAGE}${row.photo_url}`
+                  : "https://via.placeholder.com/50"
+              )
+            }
+          />
+        </div>
+      ),
+    },
     {
       name: "Status",
       cell: (row) => (
@@ -180,7 +233,32 @@ const Absensi = () => {
           </div>
         </div>
       </div>
+      {isModalOpenAbsensi && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={closeAbsensiModal}
+        >
+          <img
+            src={selectedImageAbsensi}
+            alt="Preview"
+            style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: "10px" }}
+          />
+        </div>
+      )}
     </div>
+  
+    
   );
 };
 
