@@ -13,6 +13,7 @@ import CatAbsen from "./Pages/CatAbsen";
 import Bonus from "./Pages/Bonus";
 import OffDay from "./Pages/OffDay";
 import Salary from "./Pages/Salary";
+import RolesAndCategory from "./Pages/RolesAndCategory";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -48,6 +49,7 @@ function App() {
                     <Route path="/offday" element={<OffDay />} />
                     <Route path="/bonus" element={<Bonus />} />
                     <Route path="/salary" element={<Salary />} />
+                    <Route path="/management-user" element={<RolesAndCategory />} />
                   </Routes>
                 </div>
               </div>

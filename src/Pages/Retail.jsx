@@ -178,7 +178,7 @@ const Retail = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="action-buttons">
           <button
             className="btn btn-gradient-warning btn-sm"
             onClick={() => handleUpdate(row)}
@@ -193,7 +193,7 @@ const Retail = () => {
           </button>
         </div>
       ),
-    },
+    }
   ];
 
   return (

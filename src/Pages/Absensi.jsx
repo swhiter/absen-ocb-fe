@@ -5,8 +5,8 @@ const VITE_API_URL = import.meta.env.VITE_API_URL;
 const VITE_API_IMAGE = import.meta.env.VITE_API_IMAGE;
 import Swal from "sweetalert2";
 import { format } from "date-fns";
-const now = new Date();
-const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
+// const now = new Date();
+// const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
 const Absensi = () => {
   const [Absensies, setAbsensies] = useState([]);
@@ -15,40 +15,68 @@ const Absensi = () => {
   const [loading, setLoading] = useState(false);
   const [selectedImageAbsensi, setSelectedImageAbsensi] = useState(null);
   const [isModalOpenAbsensi, setIsModalOpenAbsensi] = useState(false);
+  const [startDate, setStartDate] = useState(""); // Tanggal mulai
+  const [endDate, setEndDate] = useState(""); // Tanggal akhir
+  const [filterText, setFilterText] = useState({
+    nama_karyawan: "",
+    retail_name: "",
+    category_absen: "",
+    description: "",
+    absen_time: "",
+    fee: ""
+  
+
+  });
+  
+
+  
+
+  const fetchAbsensies = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const params = new URLSearchParams();
+      if (startDate) params.append("start_date", startDate);
+      if (endDate) params.append("end_date", endDate);
+
+
+      const response = await axios.get(`${VITE_API_URL}/absensi/history?${params.toString()}`, {
+        headers,
+      });
+      const fetchedData = response.data.data || [];
+
+      setAbsensies(fetchedData);
+
+      setError(null);
+    } catch (error) {
+      setError(error.response?.data?.message || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAbsensies = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/absensi/history/`, {
-          headers,
-        });
-        const fetchedData = response.data.data || [];
-        const validData = fetchedData.filter(
-          (item) => item && item.nama_karyawan
-        );
-        setAbsensies(validData);
-
-        setError(null);
-      } catch (error) {
-        setError(error.response?.data?.message || error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAbsensies();
   }, []);
 
-  const filteredAbsensi = Absensies.filter(
-    (item) =>
-      item.nama_karyawan?.toLowerCase().includes(search.toLowerCase()) ||
-      item.retail_name?.toLowerCase().includes(search.toLowerCase()) ||
-      item.category_absen?.toLowerCase().includes(search.toLowerCase()) ||
-      item.description?.toLowerCase().includes(search.toLowerCase())
+
+  const handleFilter = () => {
+    fetchAbsensies();
+  };
+
+
+  const filteredAbsensi = Absensies.filter((item) =>
+    Object.keys(filterText).every((key) => {
+      const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
+      const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
+  
+      // Pastikan bahwa itemValue mengandung filterValue
+      return itemValue.includes(filterValue);
+    })
   );
+  
 
   const handleImageAbsensiClick = (imageUrl) => {
     setSelectedImageAbsensi(imageUrl);
@@ -62,13 +90,13 @@ const Absensi = () => {
 
   const handleValidasi = async (row) => {
     let is_valid = "";
-    let text ="";
-    if (row.is_valid ===1 ){
+    let text = "";
+    if (row.is_valid === 1) {
       is_valid = 0;
-      text = "Invalidkan Absensi Ini ?"
-    }else {
+      text = "Invalidkan Absensi Ini ?";
+    } else {
       is_valid = 1;
-      text = "validasi Absensi Ini ?"
+      text = "validasi Absensi Ini ?";
     }
     Swal.fire({
       title: "Are you sure?",
@@ -83,11 +111,13 @@ const Absensi = () => {
         try {
           const token = localStorage.getItem("token");
           const headers = { Authorization: `Bearer ${token}` };
-          const responseValidasi = await axios.post(`${VITE_API_URL}/absensi/validasi/${row.absensi_id}`,
+          const responseValidasi = await axios.post(
+            `${VITE_API_URL}/absensi/validasi/${row.absensi_id}`,
             {
-              is_valid : is_valid,
-
-            }, { headers });
+              is_valid: is_valid,
+            },
+            { headers }
+          );
           Swal.fire("Updated!", `${responseValidasi.data.message}`, "success");
           setAbsensies((prev) =>
             prev.map((item) =>
@@ -95,7 +125,11 @@ const Absensi = () => {
             )
           );
         } catch (error) {
-          Swal.fire("Error!", error.response?.data?.message || error.message, "error");
+          Swal.fire(
+            "Error!",
+            error.response?.data?.message || error.message,
+            "error"
+          );
         }
       }
     });
@@ -103,71 +137,238 @@ const Absensi = () => {
 
   const columns = [
     {
-      name: "#",
+      name: (
+        <span style={{ marginBottom: "45px" }}>#</span>
+      ),
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    {
-      name: "Nama Karyawan",
-      selector: (row) => row.nama_karyawan, // Format start_date using date-fns
-    },
-    {
-      name: "Retail/Outlet",
-      selector: (row) => row.retail_name,
-    },
-    { name: "Code Absen", selector: (row) => row.category_absen },
-    { name: "Waktu Absen", selector: (row) => format(new Date(row.absen_time), "yyyy-MM-dd HH:mm:ss") },
-    { name: "Deskripsi", selector: (row) => row.description },
-    { name: "Fee", selector: (row) => row.fee },
-    // {
-    //   name: "Photo",
-    //   cell: (row) => (
-    //     <div>
-    //       <img
-    //          src={row?.photo_url ? `${VITE_API_IMAGE}${row?.photo_url}` : "https://via.placeholder.com/50"}
-    //          alt="Profile"
-    //         style={{ width: "50px", height: "50px", borderRadius: "10%" }}
-    //       />
-    //     </div>
-    //   ),
-    // },
-    {
-      name: "Photo",
-      cell: (row) => (
-        <div>
-          <img
-            src={
-              row?.photo_url
-                ? `${VITE_API_IMAGE}${row.photo_url}`
-                : "https://via.placeholder.com/50"
-            }
-            alt="Profile"
+      {
+     
+      selector: (row) => row.nama_karyawan,
+      cell: (row) => row.nama_karyawan,
+      // Header dengan input filter
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+          <input
+            type="text"
+            value={filterText.nama_karyawan}
+            className="form-control mt-1"
             style={{
-              width: "50px",
-              height: "50px",
-              borderRadius: "10%",
-              cursor: "pointer",
+              fontSize: "12px",
+              padding: "4px",
+              height: "28px",
+              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
+              marginBottom: "10px", // Jarak dengan header
+              textAlign: "left", // Pastikan teks rata kiri
             }}
-            onClick={() =>
-              handleImageAbsensiClick(
-                row?.photo_url
-                  ? `${VITE_API_IMAGE}${row.photo_url}`
-                  : "https://via.placeholder.com/50"
-              )
+            onChange={(e) =>
+              setFilterText({ ...filterText, nama_karyawan: e.target.value })
             }
           />
         </div>
       ),
     },
     {
-      name: "Status",
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Retail/Outlet</span>
+          <input
+            type="text"
+            value={filterText.retail_name}
+            className="form-control mt-1"
+            style={{
+              fontSize: "12px",
+              padding: "4px",
+              height: "28px",
+              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
+              marginBottom: "10px", // Jarak dengan header
+              textAlign: "left", // Pastikan teks rata kiri
+            }}
+            onChange={(e) =>
+              setFilterText({ ...filterText, retail_name: e.target.value })
+            }
+          />
+        </div>
+      ),
+      selector: (row) => row.retail_name,
+    },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Code Absen</span>
+          <input
+            type="text"
+            value={filterText.category_absen}
+            className="form-control mt-1"
+            style={{
+              fontSize: "12px",
+              padding: "4px",
+              height: "28px",
+              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
+              marginBottom: "10px", // Jarak dengan header
+              textAlign: "left", // Pastikan teks rata kiri
+            }}
+            onChange={(e) =>
+              setFilterText({ ...filterText, category_absen: e.target.value })
+            }
+          />
+        </div>
+      ),
+      selector: (row) => row.category_absen },
+    {
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Waktu Absen</span>
+          <input
+            type="text"
+            value={filterText.absen_time}
+            className="form-control mt-1"
+            style={{
+              fontSize: "12px",
+              padding: "4px",
+              height: "28px",
+              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
+              marginBottom: "10px", // Jarak dengan header
+              textAlign: "left", // Pastikan teks rata kiri
+            }}
+            onChange={(e) =>
+              setFilterText({ ...filterText, absen_time: e.target.value })
+            }
+          />
+        </div>
+      ),
+      selector: (row) =>
+        format(new Date(row.absen_time), "yyyy-MM-dd HH:mm:ss"),
+    },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Deskripsi</span>
+          <input
+            type="text"
+            className="form-control mt-1"
+            value={filterText.description}
+            style={{
+              fontSize: "12px",
+              padding: "4px",
+              height: "28px",
+              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
+              marginBottom: "10px", // Jarak dengan header
+              textAlign: "left", // Pastikan teks rata kiri
+            }}
+            onChange={(e) =>
+              setFilterText({ ...filterText, description: e.target.value })
+            }
+          />
+        </div>
+      ),
+      
+      
+      selector: (row) => row.description },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Fee</span>
+          <input
+            type="text"
+            value={filterText.fee}
+            className="form-control mt-1"
+            style={{
+              fontSize: "12px",
+              padding: "4px",
+              height: "28px",
+              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
+              marginBottom: "10px", // Jarak dengan header
+              textAlign: "left", // Pastikan teks rata kiri
+            }}
+            onChange={(e) =>
+              setFilterText({ ...filterText, fee: e.target.value })
+            }
+           
+          />
+        </div>
+      ),
+      selector: (row) => row.fee },
+    {
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Photo/Video</span>
+          <input
+            type="text"
+            className="form-control mt-1"
+            style={{
+              fontSize: "12px",
+              padding: "4px",
+              height: "28px",
+              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
+              marginBottom: "10px", // Jarak dengan header
+              textAlign: "left", // Pastikan teks rata kiri
+            }}
+            disabled
+          />
+        </div>
+      ),
+      cell: (row) => (
+        <div>
+          {row?.photo_url &&
+          (row.photo_url.endsWith(".mp4") ||
+            row.photo_url.endsWith(".webm")) ? (
+            <video
+              src={`${VITE_API_IMAGE}${row.photo_url}`}
+              alt="Video Preview"
+              style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "10%",
+                cursor: "pointer",
+                objectFit: "cover",
+              }}
+              onClick={() =>
+                handleImageAbsensiClick(`${VITE_API_IMAGE}${row.photo_url}`)
+              }
+            >
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <img
+              src={
+                row?.photo_url
+                  ? `${VITE_API_IMAGE}${row.photo_url}`
+                  : "https://via.placeholder.com/50"
+              }
+              alt="Profile"
+              style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "10%",
+                cursor: "pointer",
+                objectFit: "cover",
+              }}
+              onClick={() =>
+                handleImageAbsensiClick(
+                  row?.photo_url
+                    ? `${VITE_API_IMAGE}${row.photo_url}`
+                    : "https://via.placeholder.com/50"
+                )
+              }
+            />
+          )}
+        </div>
+      ),
+    },
+    {
+      name: (
+        <span style={{ marginBottom: "45px" }}>Status</span>
+      ),
       cell: (row) => (
         <button
           className={`btn btn-sm ${
             row.is_valid ? "btn-gradient-success" : "btn-gradient-danger"
           }`}
           onClick={() => {
-              handleValidasi(row);
+            handleValidasi(row);
           }}
         >
           {row.is_valid ? "Valid" : "Invalid"}
@@ -175,6 +376,7 @@ const Absensi = () => {
       ),
     },
   ];
+ 
 
   return (
     <div className="content-wrapper">
@@ -193,12 +395,46 @@ const Absensi = () => {
                   <p className="text-danger">Error: {error}</p>
                 ) : (
                   <>
-                    <div className="row">
-                      <div className="col-sm-8"></div>
-                      <div className="col-sm-4">
-                        <div className="input-group">
+                    {/* <div className="row"> */}
+                    <div className="row mb-5">
+                      <div className="col-md-3 d-flex align-items-end">
+                        <div className="me-2 w-100">
+                          <label htmlFor="startDate">Start Date:</label>
+                          <input
+                            id="startDate"
+                            type="date"
+                            className="form-control"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-3 d-flex align-items-end">
+                        <div className="me-2 w-100">
+                          <label htmlFor="endDate">End Date:</label>
+                          <input
+                            id="endDate"
+                            type="date"
+                            className="form-control"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                          />
+                        </div>
+                        <button
+                          className="btn btn-sm btn-gradient-info mb-1"
+                          onClick={handleFilter}
+                        >
+                          Filter
+                        </button>
+                      </div>
+
+                      <div className="col-sm-2"></div>
+                      <div className="col-sm-4 d-flex align-items-center">
+                        {/* <div className="input-group me-2 w-100">
                           <div className="input-group-prepend bg-transparent">
-                            <i className="input-group-text border-0 mdi mdi-magnify" style={{margin: "10px",}}></i>
+                            <span className="input-group-text border-0 bg-transparent">
+                              <i className="mdi mdi-magnify"></i>
+                            </span>
                           </div>
                           <input
                             className="form-control bg-transparent border-0"
@@ -206,13 +442,8 @@ const Absensi = () => {
                             placeholder="Search..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            style={{
-                              margin: "10px",
-                              padding: "5px",
-                              width: "200px",
-                            }}
                           />
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
@@ -221,10 +452,46 @@ const Absensi = () => {
                         keyField="Absensi_id"
                         columns={columns}
                         data={filteredAbsensi}
+                        customStyles={{
+                          rows: {
+                            style: {
+                              animation: "fadeIn 0.5s ease-in-out",
+                            },
+                          },
+                        }}
                         pagination
                       />
                     ) : (
-                      <p>No Absensi data available.</p>
+                      <div className="table-responsive">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            {columns.map((col, index) => (
+                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredAbsensi.length > 0 ? (
+                            filteredAbsensi.map((row, index) => (
+                              <tr key={index}>
+                                {columns.map((col, colIndex) => (
+                                  <td key={colIndex} >
+                                    {col.cell ? col.cell(row) : col.selector(row)}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
+                                <em>No data found</em>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                     )}
                   </>
                 )}
@@ -249,16 +516,34 @@ const Absensi = () => {
           }}
           onClick={closeAbsensiModal}
         >
-          <img
-            src={selectedImageAbsensi}
-            alt="Preview"
-            style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: "10px" }}
-          />
+          {selectedImageAbsensi && selectedImageAbsensi.endsWith(".mp4") ? (
+            <video
+              controls
+              style={{
+                maxWidth: "60%",
+                maxHeight: "60%",
+                borderRadius: "10px",
+              }}
+              onClick={(e) => e.stopPropagation()} // Prevent close on video click
+            >
+              <source src={selectedImageAbsensi} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <img
+              src={selectedImageAbsensi}
+              alt="Preview"
+              style={{
+                maxWidth: "60%",
+                maxHeight: "60%",
+                borderRadius: "10px",
+              }}
+              onClick={(e) => e.stopPropagation()} // Prevent close on image click
+            />
+          )}
         </div>
       )}
     </div>
-  
-    
   );
 };
 

@@ -18,13 +18,14 @@ const Users = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState({});
+  const [selectedUser, setSelectedUser] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false); // Modal untuk tambah user baru
   const [newUser, setNewUser] = useState({
     name: "",
     username: "",
     role: "",
+    imei:"",
     category_user: "",
     upline: "",
     enabled: 1,
@@ -38,6 +39,7 @@ const Users = () => {
   const [imagePreview, setImagePreview] = useState(null); // Preview gambar
   const [selectedImage, setSelectedImage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -198,6 +200,12 @@ const Users = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  const handleUpdate = (row) => {
+    setSelectedUser(row);
+    setModalVisible(true);
+  };
+  
   const handleAddUser = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -352,10 +360,7 @@ const Users = () => {
 
   // };
 
-  const handleUpdate = (row) => {
-    setSelectedUser(row);
-    setModalVisible(true);
-  };
+
 
   const handleDelete = async (row) => {
     Swal.fire({
@@ -396,158 +401,169 @@ const Users = () => {
     });
   };
 
-  const handleSaveUpdate = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const headers = { Authorization: `Bearer ${token}` };
-      const userProfile = sessionStorage.getItem("userProfile");
-      const userData = JSON.parse(userProfile);
-      const userId = userData[0]?.user_id;
+  //fungsi update old
+  // const handleSaveUpdate = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const headers = { Authorization: `Bearer ${token}` };
+  //     const userProfile = sessionStorage.getItem("userProfile");
+  //     const userData = JSON.parse(userProfile);
+  //     const userId = userData[0]?.user_id;
 
-      const responseUpdate = await axios.post(
-        `${VITE_API_URL}/users/update/${selectedUser.user_id}`,
-        {
-          name: selectedUser.name,
-          role: selectedUser.role_id,
-          category_user: selectedUser.id_category,
-          upline: selectedUser.id_upline,
-          enabled: selectedUser.enabled,
-          updated_by: userId,
-          updated_at: DateNow,
-        },
-        { headers }
-      );
+  //     const responseUpdate = await axios.post(
+  //       `${VITE_API_URL}/users/update/${selectedUser.user_id}`,
+  //       {
+  //         name: selectedUser.name,
+  //         role: selectedUser.role_id,
+  //         category_user: selectedUser.id_category,
+  //         upline: selectedUser.id_upline,
+  //         enabled: selectedUser.enabled,
+  //         updated_by: userId,
+  //         updated_at: DateNow,
+  //       },
+  //       { headers }
+  //     );
 
-      // console.log("Form Data Content:");
-      // for (let [key, value] of formData.entries()) {
-      //   console.log(`${key}:`, value);
-      // }
+  //     // console.log("Form Data Content:");
+  //     // for (let [key, value] of formData.entries()) {
+  //     //   console.log(`${key}:`, value);
+  //     // }
 
-      Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
-      setUsers((prevUsers) =>
-        prevUsers.map((item) =>
-          item.user_id === selectedUser.user_id ? selectedUser : item
-        )
-      );
-      setModalVisible(false);
-    } catch (error) {
-      Swal.fire(
-        "Error!",
-        error.response?.data?.message || error.message,
-        "error"
-      );
-    }
-  };
+  //     Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
+  //     setUsers((prevUsers) =>
+  //       prevUsers.map((item) =>
+  //         item.user_id === selectedUser.user_id ? selectedUser : item
+  //       )
+  //     );
+  //     setModalVisible(false);
+  //   } catch (error) {
+  //     Swal.fire(
+  //       "Error!",
+  //       error.response?.data?.message || error.message,
+  //       "error"
+  //     );
+  //   }
+  // };
 
   // console.log(selectedUser.photo_url)
-  //   const handleSaveUpdate = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const headers = { Authorization: `Bearer ${token}` };
-  //       const userProfile = sessionStorage.getItem("userProfile");
-  //       const userData = JSON.parse(userProfile); // Parse JSON
-  //       const userId = userData[0]?.user_id;
+    const handleSaveUpdate = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+        const userProfile = sessionStorage.getItem("userProfile");
+        const userData = JSON.parse(userProfile); // Parse JSON
+        const userId = userData[0]?.user_id;
 
-  //       const formData = new FormData();
-  //       formData.append("name", selectedUser.name);
-  //       formData.append("username", selectedUser.username);
-  //       formData.append("enabled", selectedUser.enabled);
-  //       formData.append("role", selectedUser.role_id);
-  //       formData.append("upline", selectedUser.id_upline);
-  //       formData.append("category_user", selectedUser.id_category);
-  //       formData.append("updated_by", userId);
-  //       formData.append("updated_at", DateNow);
+        const formData = new FormData();
+        formData.append("name", selectedUser.name);
+        formData.append("username", selectedUser.username);
+        formData.append("imei", selectedUser.imei);
+        formData.append("enabled", selectedUser.enabled);
+        formData.append("role", selectedUser.role_id);
+        formData.append("upline", selectedUser.id_upline);
+        formData.append("category_user", selectedUser.id_category);
+        formData.append("updated_by", userId);
+        formData.append("updated_at", DateNow);
 
-  //       if (selectedUser.photo_url instanceof File) {
-  //         const file = selectedUser.photo_url;
+        if (selectedUser.photo_url instanceof File) {
+          const file = selectedUser.photo_url;
 
-  //         // Validasi ukuran dan tipe file
-  //         if (file.size > 5 * 1024 * 1024) {
-  //           Swal.fire("Error", "File size exceeds 5MB!", "error");
-  //           return;
-  //         }
+          // Validasi ukuran dan tipe file
+          if (file.size > 5 * 1024 * 1024) {
+            Swal.fire("Error", "File size exceeds 5MB!", "error");
+            return;
+          }
 
-  //         const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-  //         if (!allowedTypes.includes(file.type)) {
-  //           Swal.fire(
-  //             "Error",
-  //             "Invalid file type. Please upload an image.",
-  //             "error"
-  //           );
-  //           return;
-  //         }
+          const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+          if (!allowedTypes.includes(file.type)) {
+            Swal.fire(
+              "Error",
+              "Invalid file type. Please upload an image.",
+              "error"
+            );
+            return;
+          }
 
-  //         formData.append("photo_url", file);
-  //       }
+          formData.append("photo_url", file);
+        }
+        else {
+          formData.append("photo_url", selectedUser.photo_url);
+        }
   //       console.log("Form Data Content:");
   // for (let [key, value] of formData.entries()) {
   //   console.log(`${key}:`, value);
   // }
 
-  //       const responseUpdate = await axios.post(
-  //         `${VITE_API_URL}/users/update/${selectedUser.user_id}`,
-  //         formData,
-  //         {
-  //           headers: {
-  //             ...headers,
-  //             "Content-Type": "multipart/form-data",
-  //           },
-  //         }
-  //       );
+        const responseUpdate = await axios.post(
+          `${VITE_API_URL}/users/update/${selectedUser.user_id}`,
+          formData,
+          {
+            headers: {
+              ...headers,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+          
+        console.log( "ini hasil photo url")
+       console.log(responseUpdate.data.data.photo_url)
+        // const addedUsers = response.data.data;
+        // console.log( addedUsers)
+        
+        setUsers((prevUsers) =>
+          prevUsers.map((item) =>
+            item.user_id === selectedUser.user_id
+              ? {
+                  ...selectedUser,
+                  category_user:
+                    category.find(
+                      (category) =>
+                        category.value ===
+                        (isNaN(selectedUser.id_category)
+                          ? null
+                          : parseInt(selectedUser.id_category))
+                    )?.label || null,
+                  role:
+                    roles.find(
+                      (r) =>
+                        r.value ===
+                        (isNaN(selectedUser.role_id)
+                          ? null
+                          : parseInt(selectedUser.role_id))
+                    )?.label || "",
+                  upline:
+                    uplines.find(
+                      (r) =>
+                        r.value ===
+                        (isNaN(selectedUser.id_upline)
+                          ? null
+                          : parseInt(selectedUser.id_upline))
+                    )?.label || "",
+                    photo_url: responseUpdate.data.data.photo_url || null,
+                    
+                }
+              : item
+          )
+        );
+        console.log("ini euy");
+        console.log(selectedUser.photo_url);
 
-  //       // const addedUsers = response.data.data;
-  //       // console.log( addedUsers)
-
-  //       setUsers((prevUsers) =>
-  //         prevUsers.map((item) =>
-  //           item.user_id === selectedUser.user_id
-  //             ? {
-  //                 ...selectedUser,
-  //                 category_user:
-  //                   category.find(
-  //                     (category) =>
-  //                       category.value ===
-  //                       (isNaN(selectedUser.id_category)
-  //                         ? null
-  //                         : parseInt(selectedUser.id_category))
-  //                   )?.label || null,
-  //                 role:
-  //                   roles.find(
-  //                     (r) =>
-  //                       r.value ===
-  //                       (isNaN(selectedUser.role_id)
-  //                         ? null
-  //                         : parseInt(selectedUser.role_id))
-  //                   )?.label || "",
-  //                 upline:
-  //                   uplines.find(
-  //                     (r) =>
-  //                       r.value ===
-  //                       (isNaN(selectedUser.id_upline)
-  //                         ? null
-  //                         : parseInt(selectedUser.id_upline))
-  //                   )?.label || "",
-  //               }
-  //             : item
-  //         )
-  //       );
-
-  //       // setUsers(responseUpdate.data.data);
-  //       Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
-  //       setUsers((prev) =>
-  //         prev.map((item) =>
-  //           item.user_id === selectedUser.user_id ? selectedUser : item
-  //         )
-  //       );
-  //       setModalVisible(false);
-  //     } catch (error) {
-  //       Swal.fire(
-  //         "Error!",
-  //         error.response?.data?.message || error.message,
-  //         "error"
-  //       );
-  //     }
-  //   };
+        // setUsers(responseUpdate.data.data);
+        Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
+        // setUsers((prev) =>
+        //   prev.map((item) =>
+        //     item.user_id === selectedUser.user_id ? selectedUser : item
+        //   )
+        // );
+        setModalVisible(false);
+      } catch (error) {
+        Swal.fire(
+          "Error!",
+          error.response?.data?.message || error.message,
+          "error"
+        );
+      }
+    };
 
   const columns = [
     {
@@ -557,9 +573,11 @@ const Users = () => {
     },
     { name: "Nama Karyawan", selector: (row) => row.name },
     { name: "Username", selector: (row) => row.username },
+    { name: "Imei", selector: (row) => row.imei },
     { name: "Role", selector: (row) => row.role },
     { name: "Job Tittle", selector: (row) => row.category_user },
     { name: "Upline", selector: (row) => row.upline },
+
     // {
     //   name: "Photo",
     //   cell: (row) => (
@@ -588,8 +606,8 @@ const Users = () => {
             }
             alt="Profile"
             style={{
-              width: "50px",
-              height: "50px",
+              width: "60px",
+              height: "60px",
               borderRadius: "10%",
               cursor: "pointer",
             }}
@@ -619,11 +637,12 @@ const Users = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="action-buttons">
           <button
             className="btn btn-gradient-warning btn-sm"
             onClick={() => handleUpdate(row)}
           >
+            
             Update
           </button>
           <button
@@ -634,7 +653,7 @@ const Users = () => {
           </button>
         </div>
       ),
-    },
+    }
   ];
 
   return (
@@ -689,7 +708,7 @@ const Users = () => {
 
                     {filteredUser && filteredUser.length > 0 ? (
                       <DataTable
-                        keyField="User_id"
+                        keyField="mydatatable"
                         columns={columns}
                         data={filteredUser}
                         pagination
@@ -723,7 +742,7 @@ const Users = () => {
           <img
             src={selectedImage}
             alt="Preview"
-            style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: "10px" }}
+            style={{ maxWidth: "60%", maxHeight: "60%", borderRadius: "10px" }}
           />
         </div>
       )}
@@ -918,6 +937,21 @@ const Users = () => {
                 </div>
 
                 <div className="form-group">
+                  <label>Imei</label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    value={selectedUser.imei || ""}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        imei: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
                   <label>User Role</label>
                   <Select
                     options={roles} // Data karyawan
@@ -948,7 +982,7 @@ const Users = () => {
                     isClearable // Tambahkan tombol untuk menghapus pilihan
                   />
                 </div>
-                {/* <div className="form-group">
+                <div className="form-group">
                   <label>Photo User</label>
                   {imagePreview || selectedUser?.photo_url ? (
                     <div style={{ marginBottom: "10px" }}>
@@ -975,7 +1009,7 @@ const Users = () => {
                     className="form-control"
                     onChange={handleImageChange}
                   />
-                </div> */}
+                </div>
 
                 <div className="form-group">
                   <label>Status</label>

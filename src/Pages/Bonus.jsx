@@ -26,6 +26,8 @@ const Bonus = () => {
   });
   const [users, setusers] = useState([]);
   const [selecteduser, setSelecteduser] = useState(null);
+  const [typePB, settypePB] = useState([]);
+  const [selectedTypePB, setSelectedTypePB] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,8 +41,8 @@ const Bonus = () => {
           headers,
         });
         const bonusData = bonusResponse.data.data || [];
-        const validBonusData = bonusData.filter((item) => item && item.name);
-        setbonus(validBonusData);
+        // const validBonusData = bonusData.filter((item) => item && item.name);
+        setbonus(bonusData);
   
         // Fetch user data
         const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
@@ -57,6 +59,21 @@ const Bonus = () => {
           );
           setSelecteduser(initialuser || null);
         }
+
+        // Fetch Type Off
+        const typePBResponse = await axios.get(`${VITE_API_URL}/management/type-pb`, { headers });
+        const typePBOptions = typePBResponse.data.data.map((typepb) => ({
+          value: typepb.id,
+          label: typepb.type_pb,
+        }));
+        settypePB(typePBOptions);
+  
+        if (selectedbonus.id_type_pb) {
+          const initialTypePB = typePBOptions.find(
+            (typepb) => typepb.value === selectedbonus.id_type_pb
+          );
+          setSelectedTypePB(initialTypePB|| null);
+        }
   
         // Clear errors
         setError(null);
@@ -69,7 +86,7 @@ const Bonus = () => {
     };
   
     fetchData();
-  }, [selectedbonus.user_id]);
+  }, [selectedbonus.user_id, selectedbonus.id_type_pb]);
   
 
   const filteredbonus = bonus.filter(
@@ -109,13 +126,16 @@ const Bonus = () => {
 
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setbonus((prev) => [
-        ...prev,
+        
         {
           ...addedbonus,
           // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
-
+          type_pb:
+          typePB.find((r) => r.value === addedbonus.type_pb)?.label || "",
           name: users.find((r) => r.value === addedbonus.user_id)?.label || "",
+
         },
+        ...prev,
       ]);
 
       // setbonus((prev) => [...prev, response.data.data]);
@@ -137,13 +157,13 @@ const Bonus = () => {
     setModalVisible(true);
   };
 
-  // const handleRetailChange = (selectedOption) => {
-  //   setSelectedRetail(selectedOption);
-  //   setSelectedbonus({
-  //     ...selectedbonus,
-  //     retail_id: selectedOption ? selectedOption.value : "",
-  //   });
-  // };
+  const handleTypePBChange = (selectedOption) => {
+    setSelectedTypePB(selectedOption);
+    setSelectedbonus({
+      ...selectedbonus,
+      id_type_pb: selectedOption ? selectedOption.value : "",
+    });
+  };
 
   const handleuserChange = (selectedOption) => {
     setSelecteduser(selectedOption);
@@ -206,6 +226,8 @@ const Bonus = () => {
           user_id: selectedbonus.user_id,
           month: selectedbonus.month,
           bonus: selectedbonus.bonus,
+          type_pb : selectedbonus.id_type_pb,
+          reason : selectedbonus.reason,
           updated_by: userId,
           updated_at: DateNow,
         },
@@ -219,6 +241,9 @@ const Bonus = () => {
           item.id_bonus === selectedbonus.id_bonus
             ? {
                 ...selectedbonus,
+                type_pb:
+                typePB.find((r) => r.value === selectedbonus.id_type_pb)
+                  ?.label || "",
                 name:
                   users.find((r) => r.value === selectedbonus.user_id)
                     ?.label || "",
@@ -254,12 +279,14 @@ const Bonus = () => {
       name: "Tanggal",
       selector: (row) => format(new Date(row.month), "yyyy-MM-dd"),
     },
-    { name: "Bonus", selector: (row) => row.bonus },
+    { name: "Type Bonus/Punishment", selector: (row) => row.type_pb },
+    { name: "Bonus/Punishment", selector: (row) => row.bonus },
+    { name: "Keterangan", selector: (row) => row.reason },
 
     {
       name: "Action",
       cell: (row) => (
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="action-buttons">
           <button
             className="btn btn-gradient-warning btn-sm"
             onClick={() => handleUpdate(row)}
@@ -274,7 +301,7 @@ const Bonus = () => {
           </button>
         </div>
       ),
-    },
+    }
   ];
 
   return (
@@ -303,13 +330,12 @@ const Bonus = () => {
                           Tambah Bonus/Punishment
                         </button>
                       </div>
-                      <div className="col-sm-4">
-                        <div className="input-group">
+                      <div className="col-sm-4 d-flex align-items-center">
+                      <div className="input-group me-2 w-100">
                           <div className="input-group-prepend bg-transparent">
-                            <i
-                              className="input-group-text border-0 mdi mdi-magnify"
-                              style={{ margin: "10px" }}
-                            ></i>
+                            <span className="input-group-text border-0 bg-transparent">
+                              <i className="mdi mdi-magnify"></i>
+                            </span>
                           </div>
                           <input
                             className="form-control bg-transparent border-0"
@@ -317,11 +343,6 @@ const Bonus = () => {
                             placeholder="Search..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            style={{
-                              margin: "10px",
-                              padding: "5px",
-                              width: "200px",
-                            }}
                           />
                         </div>
                       </div>
@@ -376,18 +397,6 @@ const Bonus = () => {
             />
           </div>
           <div className="form-group">
-            <label>Bonus/Punishment </label>
-            <input
-              type="number"
-              className="form-control"
-              value={newbonus.bonus}
-              onChange={(e) =>
-                setnewbonus({ ...newbonus, bonus: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="form-group">
             <label>Tanggal</label>
             <input
               type="date"
@@ -398,6 +407,57 @@ const Bonus = () => {
               }
             />
           </div>
+          <div className="form-group">
+            <label>Kategori Bonus/Punishment</label>
+            <Select
+              options={typePB}
+              value={
+                newbonus.type_pb
+                  ? {
+                      value: newbonus.type_pb,
+                      label: typePB.find((r) => r.value === newbonus.type_pb)
+                        ?.label,
+                    }
+                  : null
+              }
+              onChange={(option) => {
+                setSelectedTypePB(option);
+                setnewbonus({
+                  ...newbonus,
+                  type_pb: option ? option.value : "",
+                });
+              }}
+              placeholder="Pilih Kategori tidak Masuk..."
+              isClearable
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Bonus/Punishment </label>
+            <input
+              type="number"
+              className="form-control"
+              value={newbonus.bonus}
+              onChange={(e) =>
+                setnewbonus({ ...newbonus, bonus: e.target.value })
+              }
+            />
+          </div>
+          <div className="form-group">
+            <label>Keterangan</label>
+            <textarea
+              type="text"
+              className="form-control"
+              value={newbonus.reason}
+              onChange={(e) =>
+                setnewbonus({ ...newbonus, reason: e.target.value })
+              }
+            />
+          </div>
+
+
+          
+
          
          
         </Modal.Body>
@@ -434,20 +494,8 @@ const Bonus = () => {
                   isClearable // Tambahkan tombol untuk menghapus pilihan
                 />
               </div>
-              <div className="form-group">
-                <label>Bonus/Punishment</label>
-                <textarea
-                  type="number"
-                  className="form-control"
-                  value={selectedbonus.bonus}
-                  onChange={(e) =>
-                    setSelectedbonus({
-                      ...selectedbonus,
-                      bonus: e.target.value,
-                    })
-                  }
-                />
-              </div>
+
+              
               <div className="form-group">
                 <label>Tanggal</label>
                 <input
@@ -464,6 +512,44 @@ const Bonus = () => {
                     setSelectedbonus({
                       ...selectedbonus,
                       month: e.target.value, // Nilai langsung dari input date
+                    })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label> Kageori Libur</label>
+                <Select
+                  options={typePB} // Data karyawan
+                  value={selectedTypePB} // Nilai yang dipilih
+                  onChange={handleTypePBChange} // Fungsi ketika berubah
+                  placeholder="Pilih kategory Bonus/Punishment..."
+                  isClearable // Tambahkan tombol untuk menghapus pilihan
+                />
+              </div>
+              <div className="form-group">
+                <label>Bonus/Punishment</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={selectedbonus.bonus}
+                  onChange={(e) =>
+                    setSelectedbonus({
+                      ...selectedbonus,
+                      bonus: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>Keterangan</label>
+                <textarea
+                  type="text"
+                  className="form-control"
+                  value={selectedbonus.reason}
+                  onChange={(e) =>
+                    setSelectedbonus({
+                      ...selectedbonus,
+                      reason: e.target.value,
                     })
                   }
                 />

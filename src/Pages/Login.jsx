@@ -9,6 +9,7 @@ const VITE_API_URL = import.meta.env.VITE_API_URL;
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -31,7 +32,7 @@ const Login = () => {
         username,
         password,
       });
-      console.log(response)
+      // console.log(response)
       if (response.data.status_code === "200") {
 
       const token = response.data.token; // JWT dari server
@@ -89,12 +90,12 @@ const Login = () => {
             <div className="col-lg-4 mx-auto">
               <div className="auth-form-light text-left p-5">
                 <div className="brand-logo">
-                  <img src="logo_new.png" />
+                  <img src="logo_new.png" alt="Logo" />
                 </div>
                 <h4>{`Hello! let's get started`}</h4>
                 <h6 className="font-weight-light">Sign in to continue.</h6>
                 <form className="pt-3" onSubmit={handleLogin}>
-                  <div className="form-group">
+                  <div className="form-group position-relative">
                     <input
                       type="text"
                       className="form-control form-control-lg"
@@ -102,15 +103,49 @@ const Login = () => {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
+                    <i
+                      className="fa fa-user position-absolute"
+                      style={{
+                        top: "50%",
+                        right: "10px",
+                        transform: "translateY(-50%)",
+                        pointerEvents: "none",
+                        color: "#fb5a9c",
+                      }}
+                    ></i>
                   </div>
-                  <div className="form-group">
+                  <div className="form-group position-relative">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       className="form-control form-control-lg"
                       placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
+                   
+                    <i
+                      className={`fa ${
+                        showPassword ? "fa-eye" : "fa-eye-slash"
+                      } position-absolute`}
+                      style={{
+                        top: "50%",
+                        right: "40px",
+                        transform: "translateY(-50%)",
+                        cursor: "pointer",
+                        color: "#fb5a9c",
+                      }}
+                      onClick={() => setShowPassword(!showPassword)}
+                    ></i>
+                     <i
+                      className="fa fa-lock position-absolute"
+                      style={{
+                        top: "50%",
+                        right: "10px",
+                        transform: "translateY(-50%)",
+                        pointerEvents: "none",
+                        color: "#fb5a9c",
+                      }}
+                    ></i>
                   </div>
                   <div className="mt-3 d-grid gap-2">
                     <button
