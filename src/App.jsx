@@ -14,6 +14,8 @@ import Bonus from "./Pages/Bonus";
 import OffDay from "./Pages/OffDay";
 import Salary from "./Pages/Salary";
 import RolesAndCategory from "./Pages/RolesAndCategory";
+import MenuCategory from "./Pages/MenuCategory";
+import Potongan from "./Pages/Potongan";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -50,6 +52,8 @@ function App() {
                     <Route path="/bonus" element={<Bonus />} />
                     <Route path="/salary" element={<Salary />} />
                     <Route path="/management-user" element={<RolesAndCategory />} />
+                    <Route path="/menu-category" element={<MenuCategory />} />
+                    <Route path="/potongan" element={<Potongan />} />
                   </Routes>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState,useRef, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import DataTable from "react-data-table-component";
@@ -29,6 +29,15 @@ const Shift = () => {
     user_id: "",
     retail_id: "",
   });
+  const [filterText, setFilterText] = useState({
+    start_date: "",
+    end_date: "",
+    name: "",
+    retail_name: "",
+
+  });
+  const inputRefs = useRef({});
+    const [activeInput, setActiveInput] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,91 +95,21 @@ const Shift = () => {
     fetchData();
   }, [selectedShift.user_id, selectedShift.retail_id]);
 
-  const filteredShift = Shifts.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(search.toLowerCase()) ||
-      item.retail_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  // const filteredShift = Shifts.filter(
+  //   (item) =>
+  //     item.name?.toLowerCase().includes(search.toLowerCase()) ||
+  //     item.retail_name?.toLowerCase().includes(search.toLowerCase())
+  // );
   
-  //old
-  // useEffect(() => {
-  //   const fetchShifts = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const headers = { Authorization: `Bearer ${token}` };
-  //       const response = await axios.get(`${VITE_API_URL}/shift-management`, {
-  //         headers,
-  //       });
-  //       const fetchedData = response.data.data || [];
-  //       const validData = fetchedData.filter((item) => item && item.name);
-  //       setShifts(validData);
-
-  //       setError(null);
-  //     } catch (error) {
-  //       setError(error.response?.data?.message || error.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchShifts();
-  // }, []);
-
-  // useEffect(() => {
-  //   const fetchUsers = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const headers = { Authorization: `Bearer ${token}` };
-  //       const response = await axios.get(`${VITE_API_URL}/users`, { headers });
-
-  //       // Ubah data ke format options untuk react-select
-  //       const userOptions = response.data.data.map((user) => ({
-  //         value: user.user_id,
-  //         label: `${user.name} (${user.username})`,
-  //       }));
-
-  //       setUsers(userOptions);
-
-  //       // Sinkronkan nilai awal jika ada user_id di selectedShift
-  //       if (selectedShift.user_id) {
-  //         const initialUser = userOptions.find(
-  //           (user) => user.value === selectedShift.user_id
-  //         );
-  //         setSelectedUser(initialUser || null);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching users:", error.message);
-  //     }
-  //   };
-
-  //   fetchUsers();
-  // }, [selectedShift.user_id]);
-
-  // useEffect(() => {
-  //   const fetchRetail = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const headers = { Authorization: `Bearer ${token}` };
-  //       const response = await axios.get(`${VITE_API_URL}/retail`, { headers });
-  //       const retailOptions = response.data.data.map((retail) => ({
-  //         value: retail.retail_id,
-  //         label: retail.name,
-  //       }));
-  //       setRetails(retailOptions);
-  //       if (selectedShift.retail_id) {
-  //         const initialRetail = retailOptions.find(
-  //           (retail) => retail.value === selectedShift.retail_id
-  //         );
-  //         setSelectedRetail(initialRetail || null);
-  //       } // Sesuaikan key sesuai struktur respons API
-  //     } catch (error) {
-  //       console.error("Failed to fetch retail:", error);
-  //     }
-  //   };
-
-  //   fetchRetail();
-  // }, [selectedShift.retail_id]);
+  const filteredShift = Shifts.filter((item) =>
+    Object.keys(filterText).every((key) => {
+      const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
+      const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
+  
+      // Pastikan bahwa itemValue mengandung filterValue
+      return itemValue.includes(filterValue);
+    })
+  );
 
   const handleAddShift = async () => {
     try {
@@ -239,6 +178,14 @@ const Shift = () => {
       user_id: selectedOption ? selectedOption.value : "",
     });
   };
+
+  const handleInputChange = (field, value) => {
+    setFilterText((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+  
 
   const handleRetailChange = (selectedOption) => {
     setSelectedRetail(selectedOption);
@@ -339,22 +286,78 @@ const Shift = () => {
 
   const columns = [
     {
-      name: "#",
+      name: (
+        <span style={{ marginBottom: "45px" }}>#</span>
+      ),
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
     {
-      name: "Start Date",
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Start Date</span>
+          <input
+            type="text"
+            value={filterText.start_date}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.start_date = el)}
+            onChange={(e) => handleInputChange("start_date", e.target.value)}
+            onFocus={() => setActiveInput('start_date')} // Set active input
+          />
+        </div>
+      ),
       selector: (row) => format(new Date(row.start_date), "yyyy-MM-dd"), // Format start_date using date-fns
     },
     {
-      name: "End Date",
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>End Date</span>
+          <input
+            type="text"
+            value={filterText.end_date}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.end_date = el)}
+            onChange={(e) => handleInputChange("end_date", e.target.value)}
+            onFocus={() => setActiveInput('end_date')} // Set active input
+          />
+        </div>
+      ),
       selector: (row) => format(new Date(row.end_date), "yyyy-MM-dd"),
     },
-    { name: "Nama Karyawan", selector: (row) => row.name },
-    { name: "Retail", selector: (row) => row.retail_name },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+          <input
+            type="text"
+            value={filterText.name}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.name = el)}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            onFocus={() => setActiveInput('name')} // Set active input
+          />
+        </div>
+      ), 
+      selector: (row) => row.name },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+          <input
+            type="text"
+            value={filterText.retail_name}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.retail_name = el)}
+            onChange={(e) => handleInputChange("retail_name", e.target.value)}
+            onFocus={() => setActiveInput('retail_name')} // Set active input
+          />
+        </div>
+      ), 
+      selector: (row) => row.retail_name },
     {
-      name: "Action",
+      name: (
+        <span style={{ marginBottom: "45px" }}>Action</span>
+      ),
       cell: (row) => (
         <div className="action-buttons">
           <button
@@ -373,6 +376,14 @@ const Shift = () => {
       ),
     }
   ];
+
+  useEffect(() => {
+    if (activeInput && inputRefs.current[activeInput]) {
+      inputRefs.current[activeInput].focus();
+    }
+  }, [filterText, activeInput]);
+ 
+
 
   return (
     <div className="content-wrapper">
@@ -396,22 +407,13 @@ const Shift = () => {
                         <button
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
+                          style={{marginBottom:"20px"}}
                         >
                           Tambah Shift
                         </button>
                       </div>
                       <div className="col-sm-3">
-                        <input
-                          type="text"
-                          placeholder="Search..."
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                          style={{
-                            marginBottom: "10px",
-                            padding: "5px",
-                            width: "250px",
-                          }}
-                        />
+                      
                       </div>
                     </div>
 
@@ -420,10 +422,46 @@ const Shift = () => {
                         keyField="shifting_id"
                         columns={columns}
                         data={filteredShift}
+                        customStyles={{
+                          rows: {
+                            style: {
+                              animation: "fadeIn 0.5s ease-in-out",
+                            },
+                          },
+                        }}
                         pagination
                       />
-                    ) : (
-                      <p>List Shift tidak tersedia</p>
+                    ) :(
+                      <div className="table-responsive">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            {columns.map((col, index) => (
+                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredShift.length > 0 ? (
+                            filteredShift.map((row, index) => (
+                              <tr key={index}>
+                                {columns.map((col, colIndex) => (
+                                  <td key={colIndex} >
+                                    {col.cell ? col.cell(row) : col.selector(row)}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
+                                <em>No data found</em>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                     )}
                   </>
                 )}

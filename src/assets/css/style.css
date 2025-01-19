@@ -118,6 +118,14 @@
   white-space: nowrap;
 }
 
+.filter-header{
+  font-size: 12px;
+  padding: 4px;
+  height: 28px;
+  width: 100%;
+  margin-bottom: 10px;
+  text-align: left;
+}
 
 @-moz-keyframes flash {
   0% {

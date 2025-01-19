@@ -11,30 +11,30 @@ const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
 const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
-const OffDay = () => {
-  const [offDay, setoffDay] = useState([]);
+const MenuCategory = () => {
+  const [MenuCategory, setMenuCategory] = useState([]);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedoffDay, setSelectedoffDay] = useState({});
+  const [selectedMenuCategory, setSelectedMenuCategory] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false); // Modal untuk tambah user baru
-  const [newoffDay, setnewoffDay] = useState({
+  const [newMenuCategory, setnewMenuCategory] = useState({
     user_id: "",
     type_off: "",
     tanggal: "",
     reason: "",
   });
-  const [typeOff, settypeOff] = useState([]);
-  const [selectedTypeOff, setSelectedTypeOff] = useState(null);
-  const [users, setusers] = useState([]);
-  const [selecteduser, setSelecteduser] = useState(null);
+  const [groups, setGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [menus, setmenus] = useState([]);
+  const [selectedmenus, setSelectedmenus] = useState(null);
 
   const [filterText, setFilterText] = useState({
-    name: "",
-    tanggal: "",
-    type_off: "",
-    reason: "",
+    category_user: "",
+    menu_name: "",
+    parent_name: "",
+    
     
   
 
@@ -50,40 +50,45 @@ const OffDay = () => {
   
       try {
         // Fetch Off Day
-        const offDayResponse = await axios.get(`${VITE_API_URL}/management/offday`, { headers });
-        const fetchedOffDayData = offDayResponse.data.data || [];
-        const validOffDayData = fetchedOffDayData.filter((item) => item && item.name);
-        setoffDay(validOffDayData);
+        const MenuCategoryResponse = await axios.get(`${VITE_API_URL}/menu/category`, { headers });
+        const fetchedMenuCategoryData = MenuCategoryResponse.data.data || [];
+      
+        setMenuCategory(fetchedMenuCategoryData);
   
         // Fetch Type Off
-        const typeOffResponse = await axios.get(`${VITE_API_URL}/management/type-off`, { headers });
-        const typeOffOptions = typeOffResponse.data.data.map((typeoff) => ({
-          value: typeoff.id,
-          label: typeoff.type_off,
+        const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, { headers });
+        const groupOptions = response.data.data.map((group) => ({
+          value: group.id_category,
+          label: group.category_user,
         }));
-        settypeOff(typeOffOptions);
-  
-        if (selectedoffDay.id_type_off) {
-          const initialTypeOff = typeOffOptions.find(
-            (typeoff) => typeoff.value === selectedoffDay.id_type_off
+        setGroups(groupOptions);
+
+        if (selectedMenuCategory.id_category) {
+          const initialGroup = groupOptions.find(
+            (group) => group.value === selectedMenuCategory.id_category
           );
-          setSelectedTypeOff(initialTypeOff || null);
+          setSelectedGroup(initialGroup || null);
         }
+  
   
         // Fetch Users
-        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
-        const userOptions = userResponse.data.data.map((user) => ({
-          value: user.user_id,
-          label: user.name,
+        const menuResponse = await axios.get(`${VITE_API_URL}/menu`, { headers });
+        const menuOptions = menuResponse.data.data.map((menu) => ({
+          value: menu.id,
+          label: menu.name,
         }));
-        setusers(userOptions);
-  
-        if (selectedoffDay.user_id) {
-          const initialUser = userOptions.find(
-            (user) => user.value === selectedoffDay.user_id
+        setmenus(menuOptions);
+
+        
+        if (selectedMenuCategory.menu_id) {
+          const initialMenu = menuOptions.find(
+            (menu) => menu.value === selectedMenuCategory.menu_id
           );
-          setSelecteduser(initialUser || null);
+          setSelectedmenus(initialMenu || null);
         }
+  
+  
+       
         
         setError(null);
       } catch (error) {
@@ -95,16 +100,16 @@ const OffDay = () => {
     };
   
     fetchData();
-  }, [selectedoffDay.id_type_off, selectedoffDay.user_id]);
+  }, [selectedMenuCategory.id_category, selectedMenuCategory.menu_id]);
   
-  // Filtered OffDay
-  // const filteredoffDay = offDay.filter(
+  // Filtered MenuCategory
+  // const filteredMenuCategory = MenuCategory.filter(
   //   (item) =>
   //     item.name?.toLowerCase().includes(search.toLowerCase()) ||
   //     item.description?.toLowerCase().includes(search.toLowerCase())
   // );
 
-  const filteredoffDay = offDay.filter((item) =>
+  const filteredMenuCategory = MenuCategory.filter((item) =>
     Object.keys(filterText).every((key) => {
       const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
       const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
@@ -122,11 +127,11 @@ const OffDay = () => {
   };
   
   
-  console.log("Selected offDay:", selectedoffDay);
-  console.log("typeOff:", typeOff);
-  console.log("Selected typeOff:", selectedTypeOff);
+  console.log("MenuCategory:", MenuCategory);
+  console.log("Selected group:", selectedMenuCategory);
+ 
 
-  const handleAddoffDay = async () => {
+  const handleAddMenuCategory = async () => {
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
@@ -138,34 +143,34 @@ const OffDay = () => {
       //   const userId = userData?.id;
 
       const response = await axios.post(
-        `${VITE_API_URL}/management/addoffday`,
+        `${VITE_API_URL}/menu/add-config`,
         {
-          ...newoffDay,
+          ...newMenuCategory,
           created_by: userId,
           created_at: DateNow,
         },
         { headers }
       );
       // Ambil data baru dari respons API
-      const addedOffday = response.data.data;
+      const addedMenuCategory = response.data.data;
 
       // Tambahkan data baru ke state dengan format yang sesuai tabel
-      setoffDay((prev) => [
+      setMenuCategory((prev) => [
         ...prev,
         {
-          ...addedOffday,
           // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
-          type_off:
-            typeOff.find((r) => r.value === addedOffday.type_off)?.label || "", // Nama retail
-          name: users.find((r) => r.value === addedOffday.user_id)?.label || "",
+          category_user:
+            groups.find((r) => r.value === addedMenuCategory.id_category)?.label || "", // Nama retail
+          menu_name: menus.find((r) => r.value === addedMenuCategory.id)?.label || "",
+          ...addedMenuCategory,
         },
       ]);
 
-      // setoffDay((prev) => [...prev, response.data.data]);
+      // setMenuCategory((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewoffDay({ user_id: "", tanggal: "", type_off: "", reason: "" });
-      setSelectedTypeOff(null);
+      setnewMenuCategory({ id_category: "", id: "" });
+      setSelectedmenus(null);
     } catch (error) {
       Swal.fire(
         "Error!",
@@ -176,38 +181,38 @@ const OffDay = () => {
   };
 
   const handleUpdate = (row) => {
-    setSelectedoffDay(row);
+    setSelectedMenuCategory(row);
     setModalVisible(true);
   };
 
   // const handleRetailChange = (selectedOption) => {
   //   setSelectedRetail(selectedOption);
-  //   setSelectedoffDay({
-  //     ...selectedoffDay,
+  //   setSelectedMenuCategory({
+  //     ...selectedMenuCategory,
   //     retail_id: selectedOption ? selectedOption.value : "",
   //   });
   // };
 
-  const handleuserChange = (selectedOption) => {
-    setSelecteduser(selectedOption);
-    setSelectedoffDay({
-      ...selectedoffDay,
-      user_id: selectedOption ? selectedOption.value : "",
+  const handlegroupChange = (selectedOption) => {
+    setSelectedGroup(selectedOption);
+    setSelectedMenuCategory({
+      ...selectedMenuCategory,
+      id_category: selectedOption ? selectedOption.value : "",
     });
   };
 
-  const handleTypeoffChange = (selectedOption) => {
-    setSelectedTypeOff(selectedOption);
-    setSelectedoffDay({
-      ...selectedoffDay,
-      id_type_off: selectedOption ? selectedOption.value : "",
+  const handleMenuChange = (selectedOption) => {
+    setSelectedmenus(selectedOption);
+    setSelectedMenuCategory({
+      ...selectedMenuCategory,
+      menu_id: selectedOption ? selectedOption.value : "",
     });
   };
 
   const handleDelete = async (row) => {
     Swal.fire({
       title: "Kamu Yakin ?",
-      text: `Delete Off Day untuk User : ${row.name} ?`,
+      text: `Delete Menu Config untuk Katgeori User : ${row.category_user} ?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -222,7 +227,7 @@ const OffDay = () => {
       const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
-            `${VITE_API_URL}/management/deleteoffday/${row.id_off}`,
+            `${VITE_API_URL}/menu/delete-config/${row.id}`,
             {
               deleted_by: userId,
               deleted_at: DateNow,
@@ -230,8 +235,8 @@ const OffDay = () => {
             { headers }
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
-          setoffDay((prev) =>
-            prev.filter((item) => item.id_off !== row.id_off)
+          setMenuCategory((prev) =>
+            prev.filter((item) => item.id !== row.id)
           );
         } catch (error) {
           Swal.fire(
@@ -252,12 +257,10 @@ const OffDay = () => {
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/management/updateoffday/${selectedoffDay.id_off}`,
+        `${VITE_API_URL}/menu/ipdate-config/${selectedMenuCategory.id}`,
         {
-          user_id: selectedoffDay.user_id,
-          tanggal: selectedoffDay.tanggal,
-          type_off: selectedoffDay.id_type_off,
-          reason: selectedoffDay.reason,
+          id_category: selectedMenuCategory.id_category,
+          id: selectedMenuCategory.menu_id,
           updated_by: userId,
           updated_at: DateNow,
         },
@@ -266,27 +269,22 @@ const OffDay = () => {
       //const updatedAbsen = responseUpdate.data.data;
 
       // Tambahkan data baru ke state dengan format yang sesuai tabel
-      setoffDay((prevOffday) =>
-        prevOffday.map((item) =>
-          item.id_off === selectedoffDay.id_off
+      setMenuCategory((prevMenuCategory) =>
+        prevMenuCategory.map((item) =>
+          item.id === selectedMenuCategory.id
             ? {
-                ...selectedoffDay,
-                // name: users.find((u) => u.value === selectedoffDay.user_id)?.label || "",
-                type_off:
-                  typeOff.find((r) => r.value === selectedoffDay.id_type_off)
-                    ?.label || "",
-                name:
-                  users.find((r) => r.value === selectedoffDay.user_id)
-                    ?.label || "",
+                ...selectedMenuCategory,
+                category_user: groups.find((u) => u.value === selectedMenuCategory.id_category)?.label || "",
+                menu_name: menus.find((u) => u.value === selectedMenuCategory.menu_id)?.label || "",
               }
             : item
         )
       );
-      // setoffDay(responseUpdate.data.data);
+      // setMenuCategory(responseUpdate.data.data);
       Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
-      // setoffDay((prev) =>
+      // setMenuCategory((prev) =>
       //   prev.map((item) =>
-      //     item.absen_id === selectedoffDay.absen_id ? selectedoffDay : item
+      //     item.absen_id === selectedMenuCategory.absen_id ? selectedMenuCategory : item
       //   )
       // );
       setModalVisible(false);
@@ -309,60 +307,48 @@ const OffDay = () => {
     },
     { name: (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+        <span style={{ marginBottom: "6px" }}>category user</span>
         <input
           type="text"
-          value={filterText.name}
+          value={filterText.category_user}
           className="form-control mt-1 filter-header"
-          ref={(el) => (inputRefs.current.name = el)}
-          onChange={(e) => handleInputChange("name", e.target.value)}
-          onFocus={() => setActiveInput('name')} // Set active input
+          ref={(el) => (inputRefs.current.category_user = el)}
+          onChange={(e) => handleInputChange("category_user", e.target.value)}
+          onFocus={() => setActiveInput('category_user')} // Set active input
         />
       </div>
     ),
-     selector: (row) => row.name },
+     selector: (row) => row.category_user },
     {
       name: (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-          <span style={{ marginBottom: "6px" }}>Tangga</span>
+          <span style={{ marginBottom: "6px" }}>Nama Menu</span>
           <input
             type="text"
-            value={filterText.tanggal}
+            value={filterText.menu_name}
             className="form-control mt-1 filter-header"
-            ref={(el) => (inputRefs.current.tanggal = el)}
-            onChange={(e) => handleInputChange("tanggal", e.target.value)}
-            onFocus={() => setActiveInput('tanggal')} // Set active input
+            ref={(el) => (inputRefs.current.menu_name = el)}
+            onChange={(e) => handleInputChange("menu_name", e.target.value)}
+            onFocus={() => setActiveInput('menu_name')} // Set active input
           />
         </div>
       ),
-      selector: (row) => format(new Date(row.tanggal), "yyyy-MM-dd"),
+      selector: (row) => row.menu_name 
     },
     { name: (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ marginBottom: "6px" }}>Type Off/Libur</span>
+        <span style={{ marginBottom: "6px" }}>Parent Name</span>
         <input
           type="text"
-          value={filterText.type_off}
+          value={filterText.parent_name}
           className="form-control mt-1 filter-header"
-          ref={(el) => (inputRefs.current.type_off = el)}
-          onChange={(e) => handleInputChange("type_off", e.target.value)}
-          onFocus={() => setActiveInput('type_off')} // Set active input
+          ref={(el) => (inputRefs.current.parent_name = el)}
+          onChange={(e) => handleInputChange("parent_name", e.target.value)}
+          onFocus={() => setActiveInput('parent_name')} // Set active input
         />
       </div>
-    ),selector: (row) => row.type_off },
-    { name: (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ marginBottom: "6px" }}>Type Off/Libur</span>
-        <input
-          type="text"
-          value={filterText.reason}
-          className="form-control mt-1 filter-header"
-          ref={(el) => (inputRefs.current.reason = el)}
-          onChange={(e) => handleInputChange("reason", e.target.value)}
-          onFocus={() => setActiveInput('reason')} // Set active input
-        />
-      </div>
-    ), selector: (row) => row.reason },
+    ),selector: (row) => row.parent_name },
+    
 
     {
       name: (
@@ -396,13 +382,13 @@ const OffDay = () => {
   return (
     <div className="content-wrapper">
       <div className="page-header">
-        <h3 className="page-title">Management Hari Libur</h3>
+        <h3 className="page-title">Config Menu User</h3>
       </div>
       <div className="row">
         <div className="col-lg-12 grid-margin stretch-card">
           <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Table Hari Libur</h4>
+              <h4 className="card-title">Table Category Menu</h4>
               <div className="table-responsive">
                 {loading ? (
                   <p>Loading data...</p>
@@ -417,7 +403,7 @@ const OffDay = () => {
                           onClick={() => setAddModalVisible(true)}
                           style={{marginBottom:"30px"}}
                         >
-                          Tambah Hari Libur
+                          Tambah Config Menu
                         </button>
                       </div>
                       <div className="col-sm-4">
@@ -430,11 +416,11 @@ const OffDay = () => {
                       </div>
                     </div>
 
-                    {filteredoffDay && filteredoffDay.length > 0 ? (
+                    {filteredMenuCategory && filteredMenuCategory.length > 0 ? (
                       <DataTable
-                        keyField="offday-id"
+                        keyField="MenuCategory-id"
                         columns={columns}
-                        data={filteredoffDay}
+                        data={filteredMenuCategory}
                         pagination
                       />
                     ) : (
@@ -448,8 +434,8 @@ const OffDay = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredoffDay.length > 0 ? (
-                            filteredoffDay.map((row, index) => (
+                          {filteredMenuCategory.length > 0 ? (
+                            filteredMenuCategory.map((row, index) => (
                               <tr key={index}>
                                 {columns.map((col, colIndex) => (
                                   <td key={colIndex} >
@@ -480,80 +466,61 @@ const OffDay = () => {
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Tambah Hari Libur</Modal.Title>
+          <Modal.Title>Tambah Config Menu</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">
-            <label>Karyawan</label>
+            <label>category user</label>
             <Select
-              options={users}
+              options={groups}
               value={
-                newoffDay.user_id
+                newMenuCategory.id_category
                   ? {
-                      value: newoffDay.user_id,
-                      label: users.find((r) => r.value === newoffDay.user_id)
+                      value: newMenuCategory.id_category,
+                      label: groups.find((r) => r.value === newMenuCategory.id_category)
                         ?.label,
                     }
                   : null
               }
               onChange={(option) => {
-                setSelecteduser(option);
-                setnewoffDay({
-                  ...newoffDay,
-                  user_id: option ? option.value : "",
+                setSelectedGroup(option);
+                setnewMenuCategory({
+                  ...newMenuCategory,
+                  id_category: option ? option.value : "",
+                  
                 });
               }}
-              placeholder="Pilih Karyawan..."
+              placeholder="Pilih Kategory user..."
               isClearable
             />
           </div>
 
-          <div className="form-group">
-            <label>Tanggal</label>
-            <input
-              type="date"
-              className="form-control"
-              value={newoffDay.tanggal}
-              onChange={(e) =>
-                setnewoffDay({ ...newoffDay, tanggal: e.target.value })
-              }
-            />
-          </div>
+         
           <div className="form-group">
             <label>Kategori Libur</label>
             <Select
-              options={typeOff}
+              options={menus}
               value={
-                newoffDay.type_off
+                newMenuCategory.id
                   ? {
-                      value: newoffDay.type_off,
-                      label: typeOff.find((r) => r.value === newoffDay.type_off)
+                      value: newMenuCategory.id,
+                      label: menus.find((r) => r.value === newMenuCategory.id)
                         ?.label,
                     }
                   : null
               }
               onChange={(option) => {
-                setSelectedTypeOff(option);
-                setnewoffDay({
-                  ...newoffDay,
-                  type_off: option ? option.value : "",
+                setSelectedmenus(option);
+                setnewMenuCategory({
+                  ...newMenuCategory,
+                  id: option ? option.value : "",
                 });
               }}
-              placeholder="Pilih Kategori tidak Masuk..."
+              placeholder="Pilih Menu..."
               isClearable
             />
           </div>
-          <div className="form-group">
-            <label>Keterangan </label>
-            <textarea
-              type="text"
-              className="form-control"
-              value={newoffDay.reason}
-              onChange={(e) =>
-                setnewoffDay({ ...newoffDay, reason: e.target.value })
-              }
-            />
-          </div>
+        
         </Modal.Body>
         <Modal.Footer>
           <Button
@@ -564,7 +531,7 @@ const OffDay = () => {
           </Button>
           <Button
             className="btn btn-gradient-primary me-2"
-            onClick={handleAddoffDay}
+            onClick={handleAddMenuCategory}
           >
             Tambah
           </Button>
@@ -579,60 +546,28 @@ const OffDay = () => {
           <div className="card">
             <div className="card-body">
               <div className="form-group">
-                <label> Karyawan</label>
+                <label> Kategory User</label>
                 <Select
-                  options={users} // Data karyawan
-                  value={selecteduser} // Nilai yang dipilih
-                  onChange={handleuserChange} // Fungsi ketika berubah
-                  placeholder="Pilih Karyawan..."
+                  options={groups} // Data karyawan
+                  value={selectedGroup} // Nilai yang dipilih
+                  onChange={handlegroupChange} // Fungsi ketika berubah
+                  placeholder="Pilih Kategori user..."
                   isClearable // Tambahkan tombol untuk menghapus pilihan
                 />
               </div>
-              <div className="form-group">
-                <label>Tanggal</label>
-                <input
-                  className="form-control"
-                  type="date"
-                  value={
-                    selectedoffDay.tanggal
-                      ? new Date(selectedoffDay.tanggal)
-                          .toISOString()
-                          .split("T")[0] // Format ke yyyy-MM-dd
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setSelectedoffDay({
-                      ...selectedoffDay,
-                      tanggal: e.target.value, // Nilai langsung dari input date
-                    })
-                  }
-                />
-              </div>
+            
               
               <div className="form-group">
-                <label> Kageori Libur</label>
+                <label> Menu</label>
                 <Select
-                  options={typeOff} // Data karyawan
-                  value={selectedTypeOff} // Nilai yang dipilih
-                  onChange={handleTypeoffChange} // Fungsi ketika berubah
-                  placeholder="Pilih kategory Libur..."
+                  options={menus} // Data karyawan
+                  value={selectedmenus} // Nilai yang dipilih
+                  onChange={handleMenuChange} // Fungsi ketika berubah
+                  placeholder="Pilih Menu..."
                   isClearable // Tambahkan tombol untuk menghapus pilihan
                 />
               </div>
-              <div className="form-group">
-                <label>Keterangan</label>
-                <textarea
-                  type="text"
-                  className="form-control"
-                  value={selectedoffDay.reason}
-                  onChange={(e) =>
-                    setSelectedoffDay({
-                      ...selectedoffDay,
-                      reason: e.target.value,
-                    })
-                  }
-                />
-              </div>
+             
               {/* <div className="form-group">
                   <label> Retail / Outlet</label>
                   <Select
@@ -648,19 +583,19 @@ const OffDay = () => {
             <Select
               options={users}
               value={
-                selectedoffDay.user_absen
+                selectedMenuCategory.user_absen
                   ? {
-                      value: selectedoffDay.user_absen,
+                      value: selectedMenuCategory.user_absen,
                       label: users.find(
-                        (r) => r.value === selectedoffDay.user_absen
+                        (r) => r.value === selectedMenuCategory.user_absen
                       )?.label,
                     }
                   : null
               }
               onChange={(option) => {
                 setSelecteduser(option);
-                setSelectedoffDay({
-                  ...selectedoffDay,
+                setSelectedMenuCategory({
+                  ...selectedMenuCategory,
                   user_absen: option ? option.value : "",
                 });
               }}
@@ -691,4 +626,4 @@ const OffDay = () => {
   );
 };
 
-export default OffDay;
+export default MenuCategory;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useRef,useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import DataTable from "react-data-table-component";
@@ -25,11 +25,25 @@ const CatAbsen = () => {
     fee: "",
     group_absen: "",
     retail_id: "",
+    start_time:"",
+    end_time:""
   });
   const [retails, setRetails] = useState([]);
   const [selectedRetail, setSelectedRetail] = useState(null);
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+   const [filterText, setFilterText] = useState({
+
+    name: "",
+    description: "",
+    fee: "",
+    group_absen: "",
+    retail_name: "",
+    
+  
+    });
+    const inputRefs = useRef({});
+    const [activeInput, setActiveInput] = useState(null);
 
   useEffect(() => {
     const fetchcatabsen = async () => {
@@ -55,10 +69,20 @@ const CatAbsen = () => {
     fetchcatabsen();
   }, []);
 
-  const filteredCatabsen = catabsen.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(search.toLowerCase()) ||
-      item.description?.toLowerCase().includes(search.toLowerCase())
+  // const filteredCatabsen = catabsen.filter(
+  //   (item) =>
+  //     item.name?.toLowerCase().includes(search.toLowerCase()) ||
+  //     item.description?.toLowerCase().includes(search.toLowerCase())
+  // );
+
+  const filteredCatabsen = catabsen.filter((item) =>
+    Object.keys(filterText).every((key) => {
+      const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
+      const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
+  
+      // Pastikan bahwa itemValue mengandung filterValue
+      return itemValue.includes(filterValue);
+    })
   );
 
   useEffect(() => {
@@ -98,7 +122,7 @@ console.log("Selected Group:", selectedGroup);
         const headers = { Authorization: `Bearer ${token}` };
         const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, { headers });
         const groupOptions = response.data.data.map((group) => ({
-          value: group.group_absen,
+          value: group.id_category,
           label: group.category_user,
         }));
         setGroups(groupOptions);
@@ -166,22 +190,15 @@ console.log("Selected Group:", selectedGroup);
     setSelectedCatabsen(row);
     setModalVisible(true);
   };
-
-  // const handleRetailChange = (selectedOption) => {
-  //   setSelectedRetail(selectedOption);
-  //   setSelectedCatabsen({
-  //     ...selectedCatabsen,
-  //     retail_id: selectedOption ? selectedOption.value : "",
-  //   });
-  // };
-
-  const handleGroupChange = (selectedOption) => {
-    setSelectedGroup(selectedOption);
-    setSelectedCatabsen({
-      ...selectedCatabsen,
-      group_absen: selectedOption ? selectedOption.value : "",
-    });
+  
+  const handleInputChange = (field, value) => {
+    setFilterText((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
+
+ 
 
   const handleDelete = async (row) => {
     Swal.fire({
@@ -286,13 +303,107 @@ console.log("Selected Group:", selectedGroup);
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { name: "Code Absen", selector: (row) => row.name },
-    { name: "Deskripsi", selector: (row) => row.description },
-    { name: "Fee", selector: (row) => row.fee },
-    { name: "Retail", selector: (row) => row.retail_name },
-    { name: "Start Time", selector: (row) => row.start_time },
-    { name: "End Time", selector: (row) => row.end_time },
-    { name: "Group Absen", selector: (row) => row.category_user },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Code Absen</span>
+          <input
+            type="text"
+            value={filterText.name}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.name = el)}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            onFocus={() => setActiveInput('name')} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.name },
+
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Deskripsi</span>
+          <input
+            type="text"
+            value={filterText.description}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.description = el)}
+            onChange={(e) => handleInputChange("description", e.target.value)}
+            onFocus={() => setActiveInput('description')} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.description },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Fee</span>
+          <input
+            type="text"
+            value={filterText.fee}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.fee = el)}
+            onChange={(e) => handleInputChange("fee", e.target.value)}
+            onFocus={() => setActiveInput('fee')} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.fee },
+
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Retail</span>
+          <input
+            type="text"
+            value={filterText.retail_name}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.retail_name = el)}
+            onChange={(e) => handleInputChange("retail_name", e.target.value)}
+            onFocus={() => setActiveInput('retail_name')} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.retail_name },
+
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Start Time</span>
+          <input
+            type="text"
+            className="form-control mt-1 filter-header"
+            disabled
+          />
+        </div>
+      ),
+      selector: (row) => row.start_time },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>End Time</span>
+          <input
+            type="text"
+            className="form-control mt-1 filter-header"
+            disabled
+          />
+        </div>
+      ),
+      selector: (row) => row.end_time },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Group Absen</span>
+          <input
+            type="text"
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.category_user = el)}
+            onChange={(e) => handleInputChange("category_user", e.target.value)}
+            onFocus={() => setActiveInput('category_user')} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.category_user },
 
     {
       name: "Action",
@@ -314,6 +425,14 @@ console.log("Selected Group:", selectedGroup);
       ),
     },
   ];
+
+  useEffect(() => {
+    if (activeInput && inputRefs.current[activeInput]) {
+      inputRefs.current[activeInput].focus();
+    }
+  }, [filterText, activeInput]);
+ 
+
 
   return (
     <div className="content-wrapper">
@@ -337,6 +456,7 @@ console.log("Selected Group:", selectedGroup);
                         <button
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
+                          style={{marginBottom:"20px"}}
                         >
                           Tambah Tipe Absen
                         </button>
@@ -344,12 +464,12 @@ console.log("Selected Group:", selectedGroup);
                       <div className="col-sm-4">
                         <div className="input-group">
                           <div className="input-group-prepend bg-transparent">
-                            <i
+                            {/* <i
                               className="input-group-text border-0 mdi mdi-magnify"
                               style={{ margin: "10px" }}
-                            ></i>
+                            ></i> */}
                           </div>
-                          <input
+                          {/* <input
                             className="form-control bg-transparent border-0"
                             type="text"
                             placeholder="Search..."
@@ -360,7 +480,7 @@ console.log("Selected Group:", selectedGroup);
                               padding: "5px",
                               width: "200px",
                             }}
-                          />
+                          /> */}
                         </div>
                       </div>
                     </div>
@@ -373,7 +493,36 @@ console.log("Selected Group:", selectedGroup);
                         pagination
                       />
                     ) : (
-                      <p>No data available.</p>
+                      <div className="table-responsive">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            {columns.map((col, index) => (
+                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredCatabsen.length > 0 ? (
+                            filteredCatabsen.map((row, index) => (
+                              <tr key={index}>
+                                {columns.map((col, colIndex) => (
+                                  <td key={colIndex} >
+                                    {col.cell ? col.cell(row) : col.selector(row)}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
+                                <em>No data found</em>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                     )}
                   </>
                 )}
@@ -607,18 +756,9 @@ console.log("Selected Group:", selectedGroup);
               isClearable
             />
           </div>
-          {/* <div className="form-group">
-                  <label> Retail / Outlet</label>
-                  <Select
-                    options={retails} // Data karyawan
-                    value={selectedRetail} // Nilai yang dipilih
-                    onChange={handleRetailChange} // Fungsi ketika berubah
-                    placeholder="Pilih retail..."
-                    isClearable // Tambahkan tombol untuk menghapus pilihan
-                  />
-                </div> */}
-                 {/* <div className="form-group">
-            <label>Group Absen</label>
+
+          <div className="form-group">
+            <label>Nama Group </label>
             <Select
               options={groups}
               value={
@@ -632,17 +772,17 @@ console.log("Selected Group:", selectedGroup);
                   : null
               }
               onChange={(option) => {
-                setSelectedGroup(option);
+                setSelectedRetail(option);
                 setSelectedCatabsen({
                   ...selectedCatabsen,
                   group_absen: option ? option.value : "",
                 });
               }}
-              placeholder="Pilih Group Absen..."
+              placeholder="Pilih User Group..."
               isClearable
             />
-            
-          </div> */}
+          </div>
+{/*           
           <div className="form-group">
                   <label> Group User/ Category</label>
                   <Select
@@ -652,7 +792,7 @@ console.log("Selected Group:", selectedGroup);
                     placeholder="Pilih group Category..."
                     isClearable // Tambahkan tombol untuk menghapus pilihan
                   />
-                </div>
+                </div> */}
             </div>
           </div>
         </Modal.Body>

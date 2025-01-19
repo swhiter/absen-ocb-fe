@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState,useRef, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 const VITE_API_URL = import.meta.env.VITE_API_URL;
@@ -27,6 +27,8 @@ const Absensi = () => {
   
 
   });
+  const inputRefs = useRef({});
+  const [activeInput, setActiveInput] = useState(null);
   
 
   
@@ -76,6 +78,13 @@ const Absensi = () => {
       return itemValue.includes(filterValue);
     })
   );
+
+  const handleInputChange = (field, value) => {
+    setFilterText((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
   
 
   const handleImageAbsensiClick = (imageUrl) => {
@@ -154,18 +163,10 @@ const Absensi = () => {
           <input
             type="text"
             value={filterText.nama_karyawan}
-            className="form-control mt-1"
-            style={{
-              fontSize: "12px",
-              padding: "4px",
-              height: "28px",
-              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
-              marginBottom: "10px", // Jarak dengan header
-              textAlign: "left", // Pastikan teks rata kiri
-            }}
-            onChange={(e) =>
-              setFilterText({ ...filterText, nama_karyawan: e.target.value })
-            }
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.nama_karyawan = el)}
+            onChange={(e) => handleInputChange("nama_karyawan", e.target.value)}
+            onFocus={() => setActiveInput('nama_karyawan')} // Set active input
           />
         </div>
       ),
@@ -177,18 +178,10 @@ const Absensi = () => {
           <input
             type="text"
             value={filterText.retail_name}
-            className="form-control mt-1"
-            style={{
-              fontSize: "12px",
-              padding: "4px",
-              height: "28px",
-              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
-              marginBottom: "10px", // Jarak dengan header
-              textAlign: "left", // Pastikan teks rata kiri
-            }}
-            onChange={(e) =>
-              setFilterText({ ...filterText, retail_name: e.target.value })
-            }
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.retail_name = el)}
+            onChange={(e) => handleInputChange("retail_name", e.target.value)}
+            onFocus={() => setActiveInput('retail_name')} // Set active input
           />
         </div>
       ),
@@ -201,18 +194,10 @@ const Absensi = () => {
           <input
             type="text"
             value={filterText.category_absen}
-            className="form-control mt-1"
-            style={{
-              fontSize: "12px",
-              padding: "4px",
-              height: "28px",
-              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
-              marginBottom: "10px", // Jarak dengan header
-              textAlign: "left", // Pastikan teks rata kiri
-            }}
-            onChange={(e) =>
-              setFilterText({ ...filterText, category_absen: e.target.value })
-            }
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.category_absen = el)}
+            onChange={(e) => handleInputChange("category_absen", e.target.value)}
+            onFocus={() => setActiveInput('category_absen')} // Set active input
           />
         </div>
       ),
@@ -224,18 +209,10 @@ const Absensi = () => {
           <input
             type="text"
             value={filterText.absen_time}
-            className="form-control mt-1"
-            style={{
-              fontSize: "12px",
-              padding: "4px",
-              height: "28px",
-              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
-              marginBottom: "10px", // Jarak dengan header
-              textAlign: "left", // Pastikan teks rata kiri
-            }}
-            onChange={(e) =>
-              setFilterText({ ...filterText, absen_time: e.target.value })
-            }
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.absen_time = el)}
+            onChange={(e) => handleInputChange("absen_time", e.target.value)}
+            onFocus={() => setActiveInput('absen_time')} // Set active input
           />
         </div>
       ),
@@ -248,19 +225,11 @@ const Absensi = () => {
           <span style={{ marginBottom: "6px" }}>Deskripsi</span>
           <input
             type="text"
-            className="form-control mt-1"
+            className="form-control mt-1 filter-header"
             value={filterText.description}
-            style={{
-              fontSize: "12px",
-              padding: "4px",
-              height: "28px",
-              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
-              marginBottom: "10px", // Jarak dengan header
-              textAlign: "left", // Pastikan teks rata kiri
-            }}
-            onChange={(e) =>
-              setFilterText({ ...filterText, description: e.target.value })
-            }
+            ref={(el) => (inputRefs.current.description = el)}
+            onChange={(e) => handleInputChange("description", e.target.value)}
+            onFocus={() => setActiveInput('description')} // Set active input
           />
         </div>
       ),
@@ -274,18 +243,10 @@ const Absensi = () => {
           <input
             type="text"
             value={filterText.fee}
-            className="form-control mt-1"
-            style={{
-              fontSize: "12px",
-              padding: "4px",
-              height: "28px",
-              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
-              marginBottom: "10px", // Jarak dengan header
-              textAlign: "left", // Pastikan teks rata kiri
-            }}
-            onChange={(e) =>
-              setFilterText({ ...filterText, fee: e.target.value })
-            }
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.fee = el)}
+            onChange={(e) => handleInputChange("fee", e.target.value)}
+            onFocus={() => setActiveInput('fee')} // Set active input
            
           />
         </div>
@@ -297,15 +258,7 @@ const Absensi = () => {
           <span style={{ marginBottom: "6px" }}>Photo/Video</span>
           <input
             type="text"
-            className="form-control mt-1"
-            style={{
-              fontSize: "12px",
-              padding: "4px",
-              height: "28px",
-              width: "100%", // Sesuaikan agar sesuai dengan lebar kolom
-              marginBottom: "10px", // Jarak dengan header
-              textAlign: "left", // Pastikan teks rata kiri
-            }}
+            className="form-control mt-1 filter-header"
             disabled
           />
         </div>
@@ -376,6 +329,12 @@ const Absensi = () => {
       ),
     },
   ];
+
+  useEffect(() => {
+    if (activeInput && inputRefs.current[activeInput]) {
+      inputRefs.current[activeInput].focus();
+    }
+  }, [filterText, activeInput]);
  
 
   return (
@@ -403,7 +362,7 @@ const Absensi = () => {
                           <input
                             id="startDate"
                             type="date"
-                            className="form-control"
+                            className="form-control filter-header"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
                           />
@@ -415,13 +374,13 @@ const Absensi = () => {
                           <input
                             id="endDate"
                             type="date"
-                            className="form-control"
+                            className="form-control filter-header"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                           />
                         </div>
                         <button
-                          className="btn btn-sm btn-gradient-info mb-1"
+                          className="btn btn-sm btn-gradient-info mb-2"
                           onClick={handleFilter}
                         >
                           Filter

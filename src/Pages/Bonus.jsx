@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState,useRef, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import DataTable from "react-data-table-component";
@@ -28,6 +28,17 @@ const Bonus = () => {
   const [selecteduser, setSelecteduser] = useState(null);
   const [typePB, settypePB] = useState([]);
   const [selectedTypePB, setSelectedTypePB] = useState(null);
+  const [filterText, setFilterText] = useState({
+    name: "",
+    month: "",
+    type_pb: "",
+    reason: "",
+    bonus: "",
+
+  });
+  const inputRefs = useRef({});
+  const [activeInput, setActiveInput] = useState(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,10 +100,29 @@ const Bonus = () => {
   }, [selectedbonus.user_id, selectedbonus.id_type_pb]);
   
 
-  const filteredbonus = bonus.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(search.toLowerCase())
+  // const filteredbonus = bonus.filter(
+  //   (item) =>
+  //     item.name?.toLowerCase().includes(search.toLowerCase())
+  // );
+
+  const filteredbonus = bonus.filter((item) =>
+    Object.keys(filterText).every((key) => {
+      const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
+      const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
+  
+      // Pastikan bahwa itemValue mengandung filterValue
+      return itemValue.includes(filterValue);
+    })
   );
+
+  const handleInputChange = (field, value) => {
+    setFilterText((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+  
+
 
  
 
@@ -270,21 +300,88 @@ const Bonus = () => {
 
   const columns = [
     {
-      name: "#",
+      name: (
+        <span style={{ marginBottom: "45px" }}>#</span>
+      ),
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { name: "Nama Karyawan", selector: (row) => row.name },
+    { name: (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+        <input
+          type="text"
+          value={filterText.name}
+          className="form-control mt-1 filter-header"
+          ref={(el) => (inputRefs.current.name = el)}
+          onChange={(e) => handleInputChange("name", e.target.value)}
+          onFocus={() => setActiveInput('name')} // Set active input
+        />
+      </div>
+    ), selector: (row) => row.name },
     {
-      name: "Tanggal",
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Tanggal</span>
+          <input
+            type="text"
+            value={filterText.month}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.month = el)}
+            onChange={(e) => handleInputChange("month", e.target.value)}
+            onFocus={() => setActiveInput('month')} // Set active input
+          />
+        </div>
+      ),
       selector: (row) => format(new Date(row.month), "yyyy-MM-dd"),
     },
-    { name: "Type Bonus/Punishment", selector: (row) => row.type_pb },
-    { name: "Bonus/Punishment", selector: (row) => row.bonus },
-    { name: "Keterangan", selector: (row) => row.reason },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Type Bonus/Punishment</span>
+          <input
+            type="text"
+            value={filterText.type_pb}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.type_pb = el)}
+            onChange={(e) => handleInputChange("type_pb", e.target.value)}
+            onFocus={() => setActiveInput('type_pb')} // Set active input
+          />
+        </div>
+      ), selector: (row) => row.type_pb },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Bonus/Punishment</span>
+          <input
+            type="text"
+            value={filterText.bonus}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.bonus = el)}
+            onChange={(e) => handleInputChange("bonus", e.target.value)}
+            onFocus={() => setActiveInput('bonus')} // Set active input
+          />
+        </div>
+      ), selector: (row) => row.bonus },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Keterangan</span>
+          <input
+            type="text"
+            value={filterText.reason}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.reason = el)}
+            onChange={(e) => handleInputChange("reason", e.target.value)}
+            onFocus={() => setActiveInput('reason')} // Set active input
+          />
+        </div>
+      ), selector: (row) => row.reason },
 
     {
-      name: "Action",
+      name: (
+        <span style={{ marginBottom: "45px" }}>Action</span>
+      ),
       cell: (row) => (
         <div className="action-buttons">
           <button
@@ -303,6 +400,14 @@ const Bonus = () => {
       ),
     }
   ];
+  
+  useEffect(() => {
+    if (activeInput && inputRefs.current[activeInput]) {
+      inputRefs.current[activeInput].focus();
+    }
+  }, [filterText, activeInput]);
+ 
+
 
   return (
     <div className="content-wrapper">
@@ -326,6 +431,7 @@ const Bonus = () => {
                         <button
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
+                          style={{marginBottom:"20px"}}
                         >
                           Tambah Bonus/Punishment
                         </button>
@@ -334,16 +440,10 @@ const Bonus = () => {
                       <div className="input-group me-2 w-100">
                           <div className="input-group-prepend bg-transparent">
                             <span className="input-group-text border-0 bg-transparent">
-                              <i className="mdi mdi-magnify"></i>
+                             
                             </span>
                           </div>
-                          <input
-                            className="form-control bg-transparent border-0"
-                            type="text"
-                            placeholder="Search..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                          />
+                          
                         </div>
                       </div>
                     </div>
@@ -356,7 +456,36 @@ const Bonus = () => {
                         pagination
                       />
                     ) : (
-                      <p>No data available.</p>
+                      <div className="table-responsive">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            {columns.map((col, index) => (
+                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredbonus.length > 0 ? (
+                            filteredbonus.map((row, index) => (
+                              <tr key={index}>
+                                {columns.map((col, colIndex) => (
+                                  <td key={colIndex} >
+                                    {col.cell ? col.cell(row) : col.selector(row)}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
+                                <em>No data found</em>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                     )}
                   </>
                 )}

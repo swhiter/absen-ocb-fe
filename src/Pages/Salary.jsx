@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState,useRef, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import { format } from "date-fns";
@@ -11,6 +11,23 @@ const Salary = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [filterText, setFilterText] = useState({
+    name: "",
+    username: "",
+    period: "",
+    total_gaji_awal: "",
+    potongan_terlambat: "",
+    potongan_kehadiran: "",
+    bonus: "",
+    total_deduction: "",
+    total_gaji_akhir: "",
+
+  
+
+  });
+  const inputRefs = useRef({});
+  const [activeInput, setActiveInput] = useState(null);
+
 
   const formatRupiah = (value) => {
     return new Intl.NumberFormat("id-ID", {
@@ -48,29 +65,184 @@ const Salary = () => {
     fetchData();
   }, []);
 
-  const filteredsalary = salary.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(search.toLowerCase()) ||
-      item.username?.toLowerCase().includes(search.toLowerCase()) ||
-      item.period?.toLowerCase().includes(search.toLowerCase())
+  // const filteredsalary = salary.filter(
+  //   (item) =>
+  //     item.name?.toLowerCase().includes(search.toLowerCase()) ||
+  //     item.username?.toLowerCase().includes(search.toLowerCase()) ||
+  //     item.period?.toLowerCase().includes(search.toLowerCase())
+  // );
+
+  const filteredsalary = salary.filter((item) =>
+    Object.keys(filterText).every((key) => {
+      const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
+      const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
+  
+      // Pastikan bahwa itemValue mengandung filterValue
+      return itemValue.includes(filterValue);
+    })
   );
+
+  const handleInputChange = (field, value) => {
+    setFilterText((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+  
 
   const columns = [
     {
-      name: "#",
+      name: (
+        <span style={{ marginBottom: "45px" }}>#</span>
+      ),
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { name: "Nama Karyawan", selector: (row) => row.name },
-    { name: "Username", selector: (row) => row.username },
-    { name: "Period Salary", selector: (row) => row.period },
-    { name: "Total Gaji Awal", selector: (row) => formatRupiah(row.total_gaji_awal) },
-    { name: "Potongan Terlambat", selector: (row) => formatRupiah(row.potongan_terlambat) },
-    { name: "Potongan Kehadiran", selector: (row) => formatRupiah(row.potongan_kehadiran) },
-    { name: "Bonus", selector: (row) => formatRupiah(row.bonus) },
-    { name: "Total Potongan", selector: (row) => formatRupiah(row.total_deduction) },
-    { name: "Total Gaji", selector: (row) => formatRupiah(row.total_gaji_akhir) },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+          <input
+            type="text"
+            value={filterText.name}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.name = el)}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            onFocus={() => setActiveInput('name')} // Set active input
+          />
+        </div>
+      ),
+       selector: (row) => row.name },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Username</span>
+          <input
+            type="text"
+            value={filterText.username}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.username = el)}
+            onChange={(e) => handleInputChange("username", e.target.value)}
+            onFocus={() => setActiveInput('username')} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.username },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Period Salary</span>
+          <input
+            type="text"
+            value={filterText.period}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.period = el)}
+            onChange={(e) => handleInputChange("period", e.target.value)}
+            onFocus={() => setActiveInput('period')} // Set active input
+          />
+        </div>
+      ), 
+      selector: (row) => row.period },
+    { 
+      
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Total Gaji Awal</span>
+          <input
+            type="text"
+            value={filterText.total_gaji_awal}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.total_gaji_awal = el)}
+            onChange={(e) => handleInputChange("total_gaji_awal", e.target.value)}
+            onFocus={() => setActiveInput('total_gaji_awal')} // Set active input
+          />
+        </div>
+      ),  
+      selector: (row) => formatRupiah(row.total_gaji_awal) },
+    { 
+      
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Potongan Terlambat</span>
+          <input
+            type="text"
+            value={filterText.potongan_terlambat}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.potongan_terlambat = el)}
+            onChange={(e) => handleInputChange("potongan_terlambat", e.target.value)}
+            onFocus={() => setActiveInput('potongan_terlambat')} // Set active input
+          />
+        </div>
+      ),  
+      selector: (row) => formatRupiah(row.potongan_terlambat) },
+    { 
+      
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Potongan Kehadiran</span>
+          <input
+            type="text"
+            value={filterText.potongan_kehadiran}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.potongan_kehadiran = el)}
+            onChange={(e) => handleInputChange("potongan_kehadiran", e.target.value)}
+            onFocus={() => setActiveInput('potongan_kehadiran')} // Set active input
+          />
+        </div>
+      ),  
+      selector: (row) => formatRupiah(row.potongan_kehadiran) },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Bonus</span>
+          <input
+            type="text"
+            value={filterText.bonus}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.bonus = el)}
+            onChange={(e) => handleInputChange("bonus", e.target.value)}
+            onFocus={() => setActiveInput('bonus')} // Set active input
+          />
+        </div>
+      ),
+       selector: (row) => formatRupiah(row.bonus) },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Total Potongan</span>
+          <input
+            type="text"
+            value={filterText.total_deduction}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.total_deduction = el)}
+            onChange={(e) => handleInputChange("total_deduction", e.target.value)}
+            onFocus={() => setActiveInput('total_deduction')} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => formatRupiah(row.total_deduction) },
+    { 
+      name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Total Gaji</span>
+          <input
+            type="text"
+            value={filterText.total_gaji_akhir}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.total_gaji_akhir = el)}
+            onChange={(e) => handleInputChange("total_gaji_akhir", e.target.value)}
+            onFocus={() => setActiveInput('total_gaji_akhir')} // Set active input
+          />
+        </div>
+      ), 
+      selector: (row) => formatRupiah(row.total_gaji_akhir) },
   ];
+
+  useEffect(() => {
+    if (activeInput && inputRefs.current[activeInput]) {
+      inputRefs.current[activeInput].focus();
+    }
+  }, [filterText, activeInput]);
 
   const exportToExcel = () => {
     const data = filteredsalary.map((row, index) => ({
@@ -123,23 +295,9 @@ const Salary = () => {
                       <div className="col-sm-4">
                         <div className="input-group">
                           <div className="input-group-prepend bg-transparent">
-                            <i
-                              className="input-group-text border-0 mdi mdi-magnify"
-                              style={{ margin: "10px" }}
-                            ></i>
+                            
                           </div>
-                          <input
-                            className="form-control bg-transparent border-0"
-                            type="text"
-                            placeholder="Search..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            style={{
-                              margin: "10px",
-                              padding: "5px",
-                              width: "200px",
-                            }}
-                          />
+                          
                         </div>
                       </div>
                     </div>
@@ -152,7 +310,36 @@ const Salary = () => {
                         pagination
                       />
                     ) : (
-                      <p>No data available.</p>
+                      <div className="table-responsive">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            {columns.map((col, index) => (
+                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredsalary.length > 0 ? (
+                            filteredsalary.map((row, index) => (
+                              <tr key={index}>
+                                {columns.map((col, colIndex) => (
+                                  <td key={colIndex} >
+                                    {col.cell ? col.cell(row) : col.selector(row)}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
+                                <em>No data found</em>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                     )}
                   </>
                 )}
