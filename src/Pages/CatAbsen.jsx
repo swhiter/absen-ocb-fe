@@ -1,4 +1,4 @@
-import { useState, useRef,useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import DataTable from "react-data-table-component";
@@ -25,25 +25,48 @@ const CatAbsen = () => {
     fee: "",
     group_absen: "",
     retail_id: "",
-    start_time:"",
-    end_time:""
+    start_time: "",
+    end_time: "",
   });
-  const [retails, setRetails] = useState([]);
-  const [selectedRetail, setSelectedRetail] = useState(null);
+
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
-   const [filterText, setFilterText] = useState({
-
+  const [filterText, setFilterText] = useState({
     name: "",
     description: "",
     fee: "",
     group_absen: "",
     retail_name: "",
-    
-  
+  });
+  const inputRefs = useRef({});
+  const [activeInput, setActiveInput] = useState(null);
+
+  const formatAbsenData = (data) => {
+    if (!Array.isArray(data)) {
+      if (typeof data === "object" && data !== null) {
+        data = [data]; // Ubah objek menjadi array tunggal
+      } else {
+        return []; // Return array kosong jika bukan array atau objek
+      }
+    }
+
+    return data.map((item,) => {
+      return {
+        id: item.absen_id,
+        name: item.name || "Unknown",
+        description: item.description || "No description",
+        fee: item.fee || 0,
+        start_time: item.start_time || "-",
+        end_time: item.end_time || "-",
+        category_user: item.groups
+          ? item.groups.map((group) => `${group.category_user}`).join(", ")
+          : "-",
+        group_absen: item.groups
+          ? item.groups.map((group) => `${group.id_category}`).join(", ")
+          : "-",
+      };
     });
-    const inputRefs = useRef({});
-    const [activeInput, setActiveInput] = useState(null);
+  };
 
   useEffect(() => {
     const fetchcatabsen = async () => {
@@ -51,15 +74,17 @@ const CatAbsen = () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
+
         const response = await axios.get(`${VITE_API_URL}/absen-management`, {
           headers,
         });
-        const fetchedData = response.data.data || [];
-        const validData = fetchedData.filter((item) => item && item.name);
-        setcatabsen(validData);
 
+        const formattedData = formatAbsenData(response.data.data);
+
+        setcatabsen(formattedData);
         setError(null);
       } catch (error) {
+        console.error("Error fetching data:", error);
         setError(error.response?.data?.message || error.message);
       } finally {
         setLoading(false);
@@ -69,76 +94,59 @@ const CatAbsen = () => {
     fetchcatabsen();
   }, []);
 
-  // const filteredCatabsen = catabsen.filter(
-  //   (item) =>
-  //     item.name?.toLowerCase().includes(search.toLowerCase()) ||
-  //     item.description?.toLowerCase().includes(search.toLowerCase())
-  // );
+
 
   const filteredCatabsen = catabsen.filter((item) =>
     Object.keys(filterText).every((key) => {
       const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
       const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
-  
+
       // Pastikan bahwa itemValue mengandung filterValue
       return itemValue.includes(filterValue);
     })
   );
 
-  useEffect(() => {
-    const fetchRetail = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/retail`, { headers });
-        const retailOptions = response.data.data.map((retail) => ({
-          value: retail.retail_id,
-          label: retail.name,
-        }));
-        setRetails(retailOptions);
-        if (selectedCatabsen.retail_id) {
-          const initialRetail = retailOptions.find(
-            (retail) => retail.value === selectedCatabsen.retail_id
-          );
-          setSelectedRetail(initialRetail || null);
-        } // Sesuaikan key sesuai struktur respons API
-      } catch (error) {
-        console.error("Failed to fetch retail:", error);
-      }
-    };
-
-    fetchRetail();
-  }, [selectedCatabsen.retail_id]);
-
-  console.log("Selected CatAbsen:", selectedCatabsen);
-console.log("Groups:", groups);
-console.log("Selected Group:", selectedGroup);
 
   useEffect(() => {
     const fetchGroup = async () => {
       try {
-        
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, { headers });
+  
+        const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, {
+          headers,
+        });
+  
         const groupOptions = response.data.data.map((group) => ({
           value: group.id_category,
           label: group.category_user,
         }));
+  
         setGroups(groupOptions);
-        if (selectedCatabsen.group_absen) {
-          const initialGroup = groupOptions.find(
-            (group) => group.value === selectedCatabsen.group_absen
+  
+        // Update selected group jika ada group_absen di selectedCatabsen
+        if (selectedCatabsen?.group_absen) {
+          const groupIds = selectedCatabsen.group_absen
+            .split(", ")
+            .map((id_category) => Number(id_category.trim())); // Konversi ke number
+          
+        
+          const initialGroups = groupOptions.filter((group) =>
+            groupIds.includes(group.value)
           );
-          setSelectedGroup(initialGroup || null);
-        } // Sesuaikan key sesuai struktur respons API
+          
+        
+          setSelectedGroup(initialGroups);
+        }
       } catch (error) {
         console.error("Failed to fetch group:", error);
       }
     };
-
+  
     fetchGroup();
-  },[selectedCatabsen.group_absen], );
+  }, [selectedCatabsen?.group_absen]);
+
+
 
   const handleAddCatAbsen = async () => {
     try {
@@ -148,35 +156,53 @@ console.log("Selected Group:", selectedGroup);
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
 
+      // Siapkan data untuk dikirim ke backend
+      let group_details = [];
+      if (selectedGroup?.length > 0) {
+        group_details = selectedGroup.map((group) => ({
+          id_category: group.value,
+        }));
+      }
 
+      const payload = {
+        ...newCatabsen,
+        created_by: userId,
+        created_at: DateNow,
+        group_details,
+      };
+
+      // Kirim request untuk menyimpan data tipe absen dan group absen
       const response = await axios.post(
         `${VITE_API_URL}/absen-management/create`,
-        {
-          ...newCatabsen,
-          created_by: userId,
-          created_at: DateNow,
-        },
+        payload,
         { headers }
       );
+
       // Ambil data baru dari respons API
       const addedAbsen = response.data.data;
-  
+
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setcatabsen((prev) => [
-        ...prev,
         {
           ...addedAbsen,
-          // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
-          retail_name: retails.find((r) => r.value === addedAbsen.retail_id)?.label || "", // Nama retail
-          category_user: groups.find((r) => r.value === addedAbsen.group_absen)?.label || "",
+          category_user: Array.isArray(selectedGroup) 
+            ? selectedGroup.map((g) => g.label).join(", ") 
+            : "Semua Group", // Set default jika selectedGroup null atau bukan array
         },
+        ...prev,
       ]);
 
-      // setcatabsen((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewCatabsen({ name: "", description: "", fee: "", start_time:"", end_time:"", retail_id:"", group_absen:"" });
-      setSelectedRetail(null);
+      setnewCatabsen({
+        name: "",
+        description: "",
+        fee: "",
+        start_time: "",
+        end_time: "",
+        group_absen: "",
+      });
+      setSelectedGroup([]);
     } catch (error) {
       Swal.fire(
         "Error!",
@@ -186,19 +212,18 @@ console.log("Selected Group:", selectedGroup);
     }
   };
 
+
   const handleUpdate = (row) => {
     setSelectedCatabsen(row);
     setModalVisible(true);
   };
-  
+
   const handleInputChange = (field, value) => {
     setFilterText((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
-
- 
 
   const handleDelete = async (row) => {
     Swal.fire({
@@ -216,10 +241,10 @@ console.log("Selected Group:", selectedGroup);
           const userProfile = sessionStorage.getItem("userProfile");
           const userData = JSON.parse(userProfile); // Parse JSON
           const userId = userData[0]?.user_id;
-    
+
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
-            `${VITE_API_URL}/absen-management/delete/${row.absen_id}`,
+            `${VITE_API_URL}/absen-management/delete/${row.id}`,
             {
               deleted_by: userId,
               deleted_at: DateNow,
@@ -228,7 +253,7 @@ console.log("Selected Group:", selectedGroup);
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
           setcatabsen((prev) =>
-            prev.filter((item) => item.absen_id !== row.absen_id)
+            prev.filter((item) => item.id !== row.id)
           );
         } catch (error) {
           Swal.fire(
@@ -241,6 +266,10 @@ console.log("Selected Group:", selectedGroup);
     });
   };
 
+  const handleChange = (selected) => {
+    setSelectedGroup(selected || []);
+  };
+
   const handleSaveUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -248,46 +277,52 @@ console.log("Selected Group:", selectedGroup);
       const userProfile = sessionStorage.getItem("userProfile");
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
-
+  
+      // Siapkan group_details untuk dikirim ke backend
+      let group_details = [];
+      if (selectedGroup?.length > 0) {
+        group_details = selectedGroup.map((group) => ({
+          id_category: group.value,
+        }));
+      }
+  
+      // Payload untuk request update
+      const payload = {
+        name: selectedCatabsen.name,
+        description: selectedCatabsen.description,
+        fee: selectedCatabsen.fee,
+        retail_id: selectedCatabsen.retail_id,
+        start_time: selectedCatabsen.start_time,
+        end_time: selectedCatabsen.end_time,
+        group_details,
+        updated_by: userId,
+        updated_at: DateNow,
+      };
+  
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/absen-management/update/${selectedCatabsen.absen_id}`,
-        {
-          name: selectedCatabsen.name,
-          description: selectedCatabsen.description,
-          fee: selectedCatabsen.fee,
-          retail_id : selectedCatabsen.retail_id,
-          start_time : selectedCatabsen.start_time,
-          end_time : selectedCatabsen.end_time,
-          group_absen : selectedCatabsen.group_absen,
-          updated_by: userId,
-          updated_at: DateNow,
-        },
+        `${VITE_API_URL}/absen-management/update/${selectedCatabsen.id}`,
+        payload,
         { headers }
       );
-      //const updatedAbsen = responseUpdate.data.data;
+
   
-      // Tambahkan data baru ke state dengan format yang sesuai tabel
-      setcatabsen((prevAbsen =>
+      // Perbarui state catabsen dengan data yang diperbarui
+      setcatabsen((prevAbsen) =>
         prevAbsen.map((item) =>
-          item.absen_id === selectedCatabsen.absen_id
+          item.id === selectedCatabsen.id
             ? {
                 ...selectedCatabsen,
-                // name: users.find((u) => u.value === selectedCatabsen.user_id)?.label || "",
-                retail_name: retails.find((r) => r.value === selectedCatabsen.retail_id)?.label || "",
-                category_user: groups.find((r) => r.value === selectedCatabsen.group_absen)?.label || "",
-
+                category_user: Array.isArray(selectedGroup) && selectedGroup.length > 0
+                ? selectedGroup.map((g) => g.label).join(", ")
+                : "Semua Group",
               }
             : item
         )
-      ));
-      // setcatabsen(responseUpdate.data.data);
+      );
+  
       Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
-      // setcatabsen((prev) =>
-      //   prev.map((item) =>
-      //     item.absen_id === selectedCatabsen.absen_id ? selectedCatabsen : item
-      //   )
-      // );
       setModalVisible(false);
+      
     } catch (error) {
       Swal.fire(
         "Error!",
@@ -296,6 +331,7 @@ console.log("Selected Group:", selectedGroup);
       );
     }
   };
+  
 
   const columns = [
     {
@@ -303,9 +339,15 @@ console.log("Selected Group:", selectedGroup);
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { 
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Code Absen</span>
           <input
             type="text"
@@ -313,15 +355,22 @@ console.log("Selected Group:", selectedGroup);
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.name = el)}
             onChange={(e) => handleInputChange("name", e.target.value)}
-            onFocus={() => setActiveInput('name')} // Set active input
+            onFocus={() => setActiveInput("name")} // Set active input
           />
         </div>
       ),
-      selector: (row) => row.name },
+      selector: (row) => row.name,
+    },
 
-    { 
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Deskripsi</span>
           <input
             type="text"
@@ -329,14 +378,21 @@ console.log("Selected Group:", selectedGroup);
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.description = el)}
             onChange={(e) => handleInputChange("description", e.target.value)}
-            onFocus={() => setActiveInput('description')} // Set active input
+            onFocus={() => setActiveInput("description")} // Set active input
           />
         </div>
       ),
-      selector: (row) => row.description },
-    { 
+      selector: (row) => row.description,
+    },
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Fee</span>
           <input
             type="text"
@@ -344,31 +400,38 @@ console.log("Selected Group:", selectedGroup);
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.fee = el)}
             onChange={(e) => handleInputChange("fee", e.target.value)}
-            onFocus={() => setActiveInput('fee')} // Set active input
+            onFocus={() => setActiveInput("fee")} // Set active input
           />
         </div>
       ),
-      selector: (row) => row.fee },
+      selector: (row) => row.fee,
+    },
 
-    { 
-      name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-          <span style={{ marginBottom: "6px" }}>Retail</span>
-          <input
-            type="text"
-            value={filterText.retail_name}
-            className="form-control mt-1 filter-header"
-            ref={(el) => (inputRefs.current.retail_name = el)}
-            onChange={(e) => handleInputChange("retail_name", e.target.value)}
-            onFocus={() => setActiveInput('retail_name')} // Set active input
-          />
-        </div>
-      ),
-      selector: (row) => row.retail_name },
+    {
+      //   name: (
+      //     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      //       <span style={{ marginBottom: "6px" }}>Retail</span>
+      //       <input
+      //         type="text"
+      //         value={filterText.retail_name}
+      //         className="form-control mt-1 filter-header"
+      //         ref={(el) => (inputRefs.current.retail_name = el)}
+      //         onChange={(e) => handleInputChange("retail_name", e.target.value)}
+      //         onFocus={() => setActiveInput('retail_name')} // Set active input
+      //       />
+      //     </div>
+      //   ),
+      //   selector: (row) => row.retail_name },
 
-    { 
+      // {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Start Time</span>
           <input
             type="text"
@@ -377,10 +440,17 @@ console.log("Selected Group:", selectedGroup);
           />
         </div>
       ),
-      selector: (row) => row.start_time },
-    { 
+      selector: (row) => row.start_time,
+    },
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>End Time</span>
           <input
             type="text"
@@ -389,21 +459,29 @@ console.log("Selected Group:", selectedGroup);
           />
         </div>
       ),
-      selector: (row) => row.end_time },
-    { 
+      selector: (row) => row.end_time,
+    },
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Group Absen</span>
           <input
             type="text"
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.category_user = el)}
             onChange={(e) => handleInputChange("category_user", e.target.value)}
-            onFocus={() => setActiveInput('category_user')} // Set active input
+            onFocus={() => setActiveInput("category_user")} // Set active input
           />
         </div>
       ),
-      selector: (row) => row.category_user },
+      selector: (row) => row.category_user,
+    },
 
     {
       name: "Action",
@@ -431,8 +509,6 @@ console.log("Selected Group:", selectedGroup);
       inputRefs.current[activeInput].focus();
     }
   }, [filterText, activeInput]);
- 
-
 
   return (
     <div className="content-wrapper">
@@ -456,31 +532,14 @@ console.log("Selected Group:", selectedGroup);
                         <button
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
-                          style={{marginBottom:"20px"}}
+                          style={{ marginBottom: "20px" }}
                         >
                           Tambah Tipe Absen
                         </button>
                       </div>
                       <div className="col-sm-4">
                         <div className="input-group">
-                          <div className="input-group-prepend bg-transparent">
-                            {/* <i
-                              className="input-group-text border-0 mdi mdi-magnify"
-                              style={{ margin: "10px" }}
-                            ></i> */}
-                          </div>
-                          {/* <input
-                            className="form-control bg-transparent border-0"
-                            type="text"
-                            placeholder="Search..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            style={{
-                              margin: "10px",
-                              padding: "5px",
-                              width: "200px",
-                            }}
-                          /> */}
+                          <div className="input-group-prepend bg-transparent"></div>
                         </div>
                       </div>
                     </div>
@@ -494,35 +553,42 @@ console.log("Selected Group:", selectedGroup);
                       />
                     ) : (
                       <div className="table-responsive">
-                      <table className="table">
-                        <thead>
-                          <tr>
-                            {columns.map((col, index) => (
-                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredCatabsen.length > 0 ? (
-                            filteredCatabsen.map((row, index) => (
-                              <tr key={index}>
-                                {columns.map((col, colIndex) => (
-                                  <td key={colIndex} >
-                                    {col.cell ? col.cell(row) : col.selector(row)}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))
-                          ) : (
+                        <table className="table">
+                          <thead>
                             <tr>
-                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
-                                <em>No data found</em>
-                              </td>
+                              {columns.map((col, index) => (
+                                <th key={index} style={{ fontSize: "12px" }}>
+                                  {col.name}
+                                </th>
+                              ))}
                             </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {filteredCatabsen.length > 0 ? (
+                              filteredCatabsen.map((row, index) => (
+                                <tr key={index}>
+                                  {columns.map((col, colIndex) => (
+                                    <td key={colIndex}>
+                                      {col.cell
+                                        ? col.cell(row)
+                                        : col.selector(row)}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan={columns.length}
+                                  style={{ textAlign: "center" }}
+                                >
+                                  <em>No data found</em>
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </>
                 )}
@@ -533,70 +599,73 @@ console.log("Selected Group:", selectedGroup);
       </div>
 
       {/* Modal Tambah User */}
-      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
+      <Modal
+        show={addModalVisible}
+        onHide={() => setAddModalVisible(false)}
+        size="lg"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Form Tambah Tipe Absen</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="form-group">
-            <label>Code Absen</label>
-            <input
-              type="text"
-              className="form-control"
-              value={newCatabsen.name}
-              onChange={(e) =>
-                setnewCatabsen({ ...newCatabsen, name: e.target.value })
-              }
-            />
+          <div className="form-group row">
+            <div className="col">
+              <label>Code Absen</label>
+              <input
+                type="text"
+                className="form-control"
+                value={newCatabsen.name}
+                onChange={(e) =>
+                  setnewCatabsen({ ...newCatabsen, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="col">
+              <label>Description</label>
+              <input
+                type="text"
+                className="form-control"
+                value={newCatabsen.description}
+                onChange={(e) =>
+                  setnewCatabsen({
+                    ...newCatabsen,
+                    description: e.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
-          <div className="form-group">
-            <label>Description</label>
-            <input
-              type="text"
-              className="form-control"
-              value={newCatabsen.description}
-              onChange={(e) =>
-                setnewCatabsen({ ...newCatabsen, description: e.target.value })
-              }
-            />
+
+          <div className="form-group row">
+            <div className="col">
+              <label>Start Time</label>
+              <input
+                type="time"
+                className="form-control"
+                value={newCatabsen.start_time}
+                onChange={(e) =>
+                  setnewCatabsen({ ...newCatabsen, start_time: e.target.value })
+                }
+              />
+            </div>
+            <div className="col">
+              <label>End Time</label>
+              <input
+                type="time"
+                className="form-control"
+                value={newCatabsen.end_time}
+                onChange={(e) =>
+                  setnewCatabsen({ ...newCatabsen, end_time: e.target.value })
+                }
+              />
+            </div>
           </div>
-          <div className="form-group">
-            <label>fee</label>
-            <input
-              type="number"
-              className="form-control"
-              value={newCatabsen.fee}
-              onChange={(e) =>
-                setnewCatabsen({ ...newCatabsen, fee: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
-            <label>Start Time</label>
-            <input
-              type="time"
-              className="form-control"
-              value={newCatabsen.start_time}
-              onChange={(e) =>
-                setnewCatabsen({ ...newCatabsen, start_time: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
-            <label>End Time</label>
-            <input
-              type="time"
-              className="form-control"
-              value={newCatabsen.end_time}
-              onChange={(e) =>
-                setnewCatabsen({ ...newCatabsen, end_time: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
+
+          {/* <div className="form-group">
             <label>Nama Retail</label>
             <Select
               options={retails}
+              isMulti
               value={
                 newCatabsen.retail_id
                   ? {
@@ -617,31 +686,37 @@ console.log("Selected Group:", selectedGroup);
               placeholder="Pilih Retail..."
               isClearable
             />
-          </div>
-          <div className="form-group">
-            <label>Group Absen</label>
-            <Select
-              options={groups}
-              value={
-                newCatabsen.group_absen
-                  ? {
-                      value: newCatabsen.group_absen,
-                      label: groups.find(
-                        (r) => r.value === newCatabsen.group_absen
-                      )?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelectedGroup(option);
-                setnewCatabsen({
-                  ...newCatabsen,
-                  group_absen: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih Group Absen..."
-              isClearable
-            />
+          </div> */}
+          <div className="form-group row">
+            <div className="col-4">
+              <label>fee</label>
+              <input
+                type="number"
+                className="form-control"
+                value={newCatabsen.fee}
+                onChange={(e) =>
+                  setnewCatabsen({ ...newCatabsen, fee: e.target.value })
+                }
+              />
+            </div>
+            <div className="col-8">
+              <label>
+                Group Absen (
+                <span className="text-secondary text-small">
+                  Kosongkan group Absen jika tujuan nya untuk Semua Group
+                </span>
+                )
+              </label>
+
+              <Select
+                options={groups}
+                isMulti
+                value={selectedGroup}
+                onChange={handleChange}
+                placeholder="Pilih Group Absen..."
+                isClearable
+              />
+            </div>
           </div>
         </Modal.Body>
         <Modal.Footer>
@@ -667,122 +742,96 @@ console.log("Selected Group:", selectedGroup);
         <Modal.Body>
           <div className="card">
             <div className="card-body">
-                <div className="form-group">
-                  <label>kategori Absen</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={selectedCatabsen.name || ""}
-                    onChange={(e) =>
-                      setSelectedCatabsen({
-                        ...selectedCatabsen,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Description</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    value={selectedCatabsen.description || ""}
-                    onChange={(e) =>
-                      setSelectedCatabsen({
-                        ...selectedCatabsen,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Fee</label>
-                  <input
-                    className="form-control"
-                    type="number"
-                    value={selectedCatabsen.fee || ""}
-                    onChange={(e) =>
-                      setSelectedCatabsen({
-                        ...selectedCatabsen,
-                        fee: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-            <label>Start Time</label>
-            <input
-              type="time"
-              className="form-control"
-              value={selectedCatabsen.start_time}
-              onChange={(e) =>
-                setSelectedCatabsen({ ...selectedCatabsen, start_time: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
-            <label>End Time</label>
-            <input
-              type="time"
-              className="form-control"
-              value={selectedCatabsen.end_time}
-              onChange={(e) =>
-                setSelectedCatabsen({ ...selectedCatabsen, end_time: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
-            <label>Nama Retail</label>
-            <Select
-              options={retails}
-              value={
-                selectedCatabsen.retail_id
-                  ? {
-                      value: selectedCatabsen.retail_id,
-                      label: retails.find(
-                        (r) => r.value === selectedCatabsen.retail_id
-                      )?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelectedRetail(option);
-                setSelectedCatabsen({
-                  ...selectedCatabsen,
-                  retail_id: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih Retail..."
-              isClearable
-            />
-          </div>
+              <div className="form-group">
+                <label>kategori Absen</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={selectedCatabsen.name || ""}
+                  onChange={(e) =>
+                    setSelectedCatabsen({
+                      ...selectedCatabsen,
+                      name: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <input
+                  className="form-control"
+                  type="text"
+                  value={selectedCatabsen.description || ""}
+                  onChange={(e) =>
+                    setSelectedCatabsen({
+                      ...selectedCatabsen,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>Fee</label>
+                <input
+                  className="form-control"
+                  type="number"
+                  value={selectedCatabsen.fee || ""}
+                  onChange={(e) =>
+                    setSelectedCatabsen({
+                      ...selectedCatabsen,
+                      fee: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>Start Time</label>
+                <input
+                  type="time"
+                  className="form-control"
+                  value={selectedCatabsen.start_time}
+                  onChange={(e) =>
+                    setSelectedCatabsen({
+                      ...selectedCatabsen,
+                      start_time: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>End Time</label>
+                <input
+                  type="time"
+                  className="form-control"
+                  value={selectedCatabsen.end_time}
+                  onChange={(e) =>
+                    setSelectedCatabsen({
+                      ...selectedCatabsen,
+                      end_time: e.target.value,
+                    })
+                  }
+                />
+              </div>
+             
 
-          <div className="form-group">
-            <label>Nama Group </label>
-            <Select
-              options={groups}
-              value={
-                selectedCatabsen.group_absen
-                  ? {
-                      value: selectedCatabsen.group_absen,
-                      label: groups.find(
-                        (r) => r.value === selectedCatabsen.group_absen
-                      )?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelectedRetail(option);
-                setSelectedCatabsen({
-                  ...selectedCatabsen,
-                  group_absen: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih User Group..."
-              isClearable
-            />
-          </div>
-{/*           
+              <div className="form-group">
+              <label>
+          Group Absen (
+          <span className="text-secondary text-small">
+            Kosongkan group Absen jika tujuan nya untuk Semua Group
+          </span>
+          )
+        </label>
+        <Select
+          options={groups}
+          isMulti
+          value={selectedGroup}
+          onChange={(selected) => setSelectedGroup(selected)}
+          placeholder="Pilih Group Absen..."
+          isClearable
+        />
+              </div>
+              {/*           
           <div className="form-group">
                   <label> Group User/ Category</label>
                   <Select

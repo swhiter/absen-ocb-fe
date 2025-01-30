@@ -38,6 +38,32 @@ const Bonus = () => {
   });
   const inputRefs = useRef({});
   const [activeInput, setActiveInput] = useState(null);
+  const formatBonusDayData = (data) => {
+    if (!Array.isArray(data)) {
+      if (typeof data === "object" && data !== null) {
+        data = [data]; // Ubah objek menjadi array tunggal
+      } else {
+        return []; // Return array kosong jika bukan array atau objek
+      }
+    }
+
+    return data.map((item,) => {
+      return {
+        id: item.id_bonus,
+        month: item.month || "",
+        bonus : item.bonus,
+        type_pb: item.type_pb || "-",
+        reason: item.reason || "-",
+        id_type_pb : item.id_type_pb,
+        name: item.detail_user
+          ? item.detail_user.map((group) => `${group.name}`).join(", ")
+          : "-",
+        employes_id: item.detail_user
+          ? item.detail_user.map((group) => `${group.user_id}`).join(", ")
+          : "-",
+      };
+    });
+  };
 
 
   useEffect(() => {
@@ -51,9 +77,9 @@ const Bonus = () => {
         const bonusResponse = await axios.get(`${VITE_API_URL}/management/bonus`, {
           headers,
         });
-        const bonusData = bonusResponse.data.data || [];
+        const formattedData = formatBonusDayData(bonusResponse.data.data);
         // const validBonusData = bonusData.filter((item) => item && item.name);
-        setbonus(bonusData);
+        setbonus(formattedData);
   
         // Fetch user data
         const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
@@ -64,11 +90,17 @@ const Bonus = () => {
         setusers(userOptions);
   
         // Set selected user if `selectedbonus.user_id` exists
-        if (selectedbonus.user_id) {
-          const initialuser = userOptions.find(
-            (user) => user.value === selectedbonus.user_id
+        if (selectedbonus?.employes_id) {
+          const groupIds = selectedbonus.employes_id
+            .split(", ")
+            .map((user_id) => Number(user_id.trim())); // Konversi ke number
+          
+        
+          const initialGroups = userOptions.filter((group) =>
+            groupIds.includes(group.value)
           );
-          setSelecteduser(initialuser || null);
+        
+          setSelecteduser(initialGroups);
         }
 
         // Fetch Type Off
@@ -97,7 +129,7 @@ const Bonus = () => {
     };
   
     fetchData();
-  }, [selectedbonus.user_id, selectedbonus.id_type_pb]);
+  }, [selectedbonus.employes_id, selectedbonus.id_type_pb]);
   
 
   // const filteredbonus = bonus.filter(
@@ -141,14 +173,23 @@ const Bonus = () => {
 
       //   const userData = JSON.parse(sessionStorage.getItem("userData"));
       //   const userId = userData?.id;
+      let employes_bonus = [];
+      if (selecteduser?.length > 0) {
+        employes_bonus = selecteduser.map((user) => ({
+          user_id: user.value,
+        }));
+      }
+
+      const payload = {
+        ...newbonus,
+        created_by: userId,
+        created_at: DateNow,
+        employes_bonus,
+      };
 
       const response = await axios.post(
         `${VITE_API_URL}/management/addbonus`,
-        {
-          ...newbonus,
-          created_by: userId,
-          created_at: DateNow,
-        },
+       payload,
         { headers }
       );
       // Ambil data baru dari respons API
@@ -162,7 +203,9 @@ const Bonus = () => {
           // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
           type_pb:
           typePB.find((r) => r.value === addedbonus.type_pb)?.label || "",
-          name: users.find((r) => r.value === addedbonus.user_id)?.label || "",
+          name: Array.isArray(selecteduser) && selecteduser.length > 0
+          ? selecteduser.map((g) => g.label).join(", ") 
+          : "Semua Karyawan",
 
         },
         ...prev,
@@ -171,7 +214,7 @@ const Bonus = () => {
       // setbonus((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewbonus({ user_id: "", bonus: "", month: ""});
+      setnewbonus({ user_id: "", bonus: "", month: "", type_pb: ""});
       setSelecteduser(null);
     } catch (error) {
       Swal.fire(
@@ -196,17 +239,13 @@ const Bonus = () => {
   };
 
   const handleuserChange = (selectedOption) => {
-    setSelecteduser(selectedOption);
-    setSelectedbonus({
-      ...selectedbonus,
-      user_id: selectedOption ? selectedOption.value : "",
-    });
+    setSelecteduser(selectedOption ||[]);
   };
 
   const handleDelete = async (row) => {
     Swal.fire({
       title: "Kamu Yakin ?",
-      text: `Delete Bonus untuk User : ${row.name} ?`,
+      text: `Delete Bonus/Punishment ?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -221,7 +260,7 @@ const Bonus = () => {
       const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
-            `${VITE_API_URL}/management/deletebonus/${row.id_bonus}`,
+            `${VITE_API_URL}/management/deletebonus/${row.id}`,
             {
               deleted_by: userId,
               deleted_at: DateNow,
@@ -230,7 +269,7 @@ const Bonus = () => {
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
           setbonus((prev) =>
-            prev.filter((item) => item.id_bonus !== row.id_bonus)
+            prev.filter((item) => item.id !== row.id)
           );
         } catch (error) {
           Swal.fire(
@@ -250,17 +289,28 @@ const Bonus = () => {
       const userProfile = sessionStorage.getItem("userProfile");
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
-      const responseUpdate = await axios.post(
-        `${VITE_API_URL}/management/updatebonus/${selectedbonus.id_bonus}`,
-        {
-          user_id: selectedbonus.user_id,
+
+
+      let employes_bonus = [];
+      if (selecteduser?.length > 0) {
+        employes_bonus = selecteduser.map((group) => ({
+          user_id: group.value,
+        }));
+      }
+
+      const payload = {
           month: selectedbonus.month,
           bonus: selectedbonus.bonus,
           type_pb : selectedbonus.id_type_pb,
           reason : selectedbonus.reason,
+          employes_bonus,
           updated_by: userId,
           updated_at: DateNow,
-        },
+      };
+
+      const responseUpdate = await axios.post(
+        `${VITE_API_URL}/management/updatebonus/${selectedbonus.id}`,
+        payload,
         { headers }
       );
       //const updatedAbsen = responseUpdate.data.data;
@@ -268,15 +318,15 @@ const Bonus = () => {
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setbonus((prevbonus) =>
         prevbonus.map((item) =>
-          item.id_bonus === selectedbonus.id_bonus
+          item.id === selectedbonus.id
             ? {
                 ...selectedbonus,
                 type_pb:
                 typePB.find((r) => r.value === selectedbonus.id_type_pb)
                   ?.label || "",
-                name:
-                  users.find((r) => r.value === selectedbonus.user_id)
-                    ?.label || "",
+                  name: Array.isArray(selecteduser)&& selecteduser.length > 0
+                  ? selecteduser.map((g) => g.label).join(", ")
+                  : "Semua Karyawan",
               }
             : item
         )
@@ -496,36 +546,12 @@ const Bonus = () => {
       </div>
 
       {/* Modal Tambah User */}
-      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
+      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Tambah Bonus/Punishment</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="form-group">
-            <label>Karyawan</label>
-            <Select
-              options={users}
-              value={
-                newbonus.user_id
-                  ? {
-                      value: newbonus.user_id,
-                      label: users.find((r) => r.value === newbonus.user_id)
-                        ?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelecteduser(option);
-                setnewbonus({
-                  ...newbonus,
-                  user_id: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih Karyawan..."
-              isClearable
-            />
-          </div>
-          <div className="form-group">
+        <div className="form-group">
             <label>Tanggal</label>
             <input
               type="date"
@@ -536,6 +562,23 @@ const Bonus = () => {
               }
             />
           </div>
+          <div className="form-group">
+            <label>Karyawan</label>
+            <label> Karyawan  (
+                <span className="text-secondary text-small">
+                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+                </span>
+                )</label>
+                <Select
+                  options={users} 
+                  isMulti
+                  value={selecteduser} // Nilai yang dipilih
+                  onChange={handleuserChange} // Fungsi ketika berubah
+                  placeholder="Pilih Karyawan..."
+                  isClearable // Tambahkan tombol untuk menghapus pilihan
+                />
+          </div>
+          
           <div className="form-group">
             <label>Kategori Bonus/Punishment</label>
             <Select
@@ -556,7 +599,7 @@ const Bonus = () => {
                   type_pb: option ? option.value : "",
                 });
               }}
-              placeholder="Pilih Kategori tidak Masuk..."
+              placeholder="Pilih Kategori Bonus/Punishment"
               isClearable
             />
           </div>
@@ -613,16 +656,7 @@ const Bonus = () => {
         <Modal.Body>
           <div className="card">
             <div className="card-body">
-              <div className="form-group">
-                <label> Karyawan</label>
-                <Select
-                  options={users} // Data karyawan
-                  value={selecteduser} // Nilai yang dipilih
-                  onChange={handleuserChange} // Fungsi ketika berubah
-                  placeholder="Pilih Karyawan..."
-                  isClearable // Tambahkan tombol untuk menghapus pilihan
-                />
-              </div>
+             
 
               
               <div className="form-group">
@@ -643,6 +677,21 @@ const Bonus = () => {
                       month: e.target.value, // Nilai langsung dari input date
                     })
                   }
+                />
+              </div>
+              <div className="form-group">
+                <label> Karyawan  (
+                <span className="text-secondary text-small">
+                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+                </span>
+                )</label>
+                <Select
+                  options={users} 
+                  isMulti
+                  value={selecteduser} // Nilai yang dipilih
+                  onChange={(selectedOption) => setSelecteduser(selectedOption)} // Fungsi ketika berubah
+                  placeholder="Pilih Karyawan..."
+                  isClearable // Tambahkan tombol untuk menghapus pilihan
                 />
               </div>
               <div className="form-group">

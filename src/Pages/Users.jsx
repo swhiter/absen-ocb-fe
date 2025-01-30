@@ -374,8 +374,9 @@ const Users = () => {
       if (result.isConfirmed) {
         try {
           const token = localStorage.getItem("token");
-          const userData = JSON.parse(sessionStorage.getItem("userData"));
-          const userId = userData?.id;
+          const userProfile = sessionStorage.getItem("userProfile");
+          const userData = JSON.parse(userProfile); // Parse JSON
+          const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
             `${VITE_API_URL}/users/delete/${row.user_id}`,
@@ -683,7 +684,7 @@ const Users = () => {
             src={
               row?.photo_url
                 ? `${VITE_API_IMAGE}${row.photo_url}`
-                : "https://via.placeholder.com/50"
+                : "/user-icon.jpg"
             }
             alt="Profile"
             style={{
@@ -696,7 +697,7 @@ const Users = () => {
               handleImageClick(
                 row?.photo_url
                   ? `${VITE_API_IMAGE}${row.photo_url}`
-                  : "https://via.placeholder.com/50"
+                  : "/user-icon.jpg"
               )
             }
           />

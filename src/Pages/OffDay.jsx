@@ -14,7 +14,6 @@ const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 const OffDay = () => {
   const [offDay, setoffDay] = useState([]);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedoffDay, setSelectedoffDay] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
@@ -24,6 +23,8 @@ const OffDay = () => {
     type_off: "",
     tanggal: "",
     reason: "",
+    employes_id : "",
+    name: "",
   });
   const [typeOff, settypeOff] = useState([]);
   const [selectedTypeOff, setSelectedTypeOff] = useState(null);
@@ -41,6 +42,33 @@ const OffDay = () => {
   });
   const inputRefs = useRef({});
   const [activeInput, setActiveInput] = useState(null);
+  
+  const formatOffDayData = (data) => {
+    if (!Array.isArray(data)) {
+      if (typeof data === "object" && data !== null) {
+        data = [data]; // Ubah objek menjadi array tunggal
+      } else {
+        return []; // Return array kosong jika bukan array atau objek
+      }
+    }
+
+    return data.map((item,) => {
+      return {
+        id: item.id_offday,
+        tanggal: item.tanggal || "",
+        type_off: item.type_off || "Unknown",
+        reason: item.reason || "Unknown",
+        id_type_off : item.id_type_off,
+        name: item.detail_user
+          ? item.detail_user.map((group) => `${group.name}`).join(", ")
+          : "-",
+        employes_id: item.detail_user
+          ? item.detail_user.map((group) => `${group.user_id}`).join(", ")
+          : "-",
+      };
+    });
+  };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,39 +79,8 @@ const OffDay = () => {
       try {
         // Fetch Off Day
         const offDayResponse = await axios.get(`${VITE_API_URL}/management/offday`, { headers });
-        const fetchedOffDayData = offDayResponse.data.data || [];
-        const validOffDayData = fetchedOffDayData.filter((item) => item && item.name);
-        setoffDay(validOffDayData);
-  
-        // Fetch Type Off
-        const typeOffResponse = await axios.get(`${VITE_API_URL}/management/type-off`, { headers });
-        const typeOffOptions = typeOffResponse.data.data.map((typeoff) => ({
-          value: typeoff.id,
-          label: typeoff.type_off,
-        }));
-        settypeOff(typeOffOptions);
-  
-        if (selectedoffDay.id_type_off) {
-          const initialTypeOff = typeOffOptions.find(
-            (typeoff) => typeoff.value === selectedoffDay.id_type_off
-          );
-          setSelectedTypeOff(initialTypeOff || null);
-        }
-  
-        // Fetch Users
-        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
-        const userOptions = userResponse.data.data.map((user) => ({
-          value: user.user_id,
-          label: user.name,
-        }));
-        setusers(userOptions);
-  
-        if (selectedoffDay.user_id) {
-          const initialUser = userOptions.find(
-            (user) => user.value === selectedoffDay.user_id
-          );
-          setSelecteduser(initialUser || null);
-        }
+        const formattedData = formatOffDayData(offDayResponse.data.data);
+        setoffDay(formattedData);
         
         setError(null);
       } catch (error) {
@@ -95,14 +92,56 @@ const OffDay = () => {
     };
   
     fetchData();
-  }, [selectedoffDay.id_type_off, selectedoffDay.user_id]);
+  }, []);
+
+  useEffect(() => {
+    const fetchSelect = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
   
-  // Filtered OffDay
-  // const filteredoffDay = offDay.filter(
-  //   (item) =>
-  //     item.name?.toLowerCase().includes(search.toLowerCase()) ||
-  //     item.description?.toLowerCase().includes(search.toLowerCase())
-  // );
+        const typeOffResponse = await axios.get(`${VITE_API_URL}/management/type-off`, { headers });
+        const typeOffOptions = typeOffResponse.data.data.map((typeoff) => ({
+          value: typeoff.id,
+          label: typeoff.type_off,
+        }));
+        settypeOff(typeOffOptions);
+  
+        // Update selected group jika ada group_absen di selectedCatabsen
+        if (selectedoffDay?.id_type_off) {
+          const initialTypeOff = typeOff.find(
+            (typeoff) => typeoff.value === selectedoffDay.id_type_off
+          );
+          setSelectedTypeOff(initialTypeOff || null);
+        }
+
+        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
+        const userOptions = userResponse.data.data.map((user) => ({
+          value: user.user_id,
+          label: user.name,
+        }));
+        setusers(userOptions);
+        if (selectedoffDay?.employes_id) {
+          const groupIds = selectedoffDay.employes_id
+            .split(", ")
+            .map((user_id) => Number(user_id.trim())); // Konversi ke number
+          
+        
+          const initialGroups = userOptions.filter((group) =>
+            groupIds.includes(group.value)
+          );
+        
+          setSelecteduser(initialGroups);
+        }
+      } catch (error) {
+        console.error("Failed to fetch group:", error);
+      }
+    };
+  
+    fetchSelect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedoffDay?.employes_id, selectedoffDay?.id_type_off]);
+
 
   const filteredoffDay = offDay.filter((item) =>
     Object.keys(filterText).every((key) => {
@@ -113,6 +152,8 @@ const OffDay = () => {
       return itemValue.includes(filterValue);
     })
   );
+
+  
 
   const handleInputChange = (field, value) => {
     setFilterText((prev) => ({
@@ -134,16 +175,23 @@ const OffDay = () => {
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
 
-      //   const userData = JSON.parse(sessionStorage.getItem("userData"));
-      //   const userId = userData?.id;
+      let employes_offday = [];
+      if (selecteduser?.length > 0) {
+        employes_offday = selecteduser.map((user) => ({
+          user_id: user.value,
+        }));
+      }
+
+      const payload = {
+        ...newoffDay,
+        created_by: userId,
+        created_at: DateNow,
+        employes_offday,
+      };
 
       const response = await axios.post(
         `${VITE_API_URL}/management/addoffday`,
-        {
-          ...newoffDay,
-          created_by: userId,
-          created_at: DateNow,
-        },
+        payload,
         { headers }
       );
       // Ambil data baru dari respons API
@@ -151,20 +199,23 @@ const OffDay = () => {
 
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setoffDay((prev) => [
-        ...prev,
+       
         {
           ...addedOffday,
           // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
           type_off:
             typeOff.find((r) => r.value === addedOffday.type_off)?.label || "", // Nama retail
-          name: users.find((r) => r.value === addedOffday.user_id)?.label || "",
+            name: Array.isArray(selecteduser) && selecteduser.length > 0
+            ? selecteduser.map((g) => g.label).join(", ") 
+            : "Semua Karyawan",
         },
+        ...prev,
       ]);
 
       // setoffDay((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewoffDay({ user_id: "", tanggal: "", type_off: "", reason: "" });
+      setnewoffDay({ user_id: "", tanggal: "", type_off: "", reason: "", employes_id: "" });
       setSelectedTypeOff(null);
     } catch (error) {
       Swal.fire(
@@ -180,6 +231,12 @@ const OffDay = () => {
     setModalVisible(true);
   };
 
+  const handleCloseUpdate = () =>
+  {
+    setSelectedoffDay([]);
+    setModalVisible(false);
+  };
+
   // const handleRetailChange = (selectedOption) => {
   //   setSelectedRetail(selectedOption);
   //   setSelectedoffDay({
@@ -189,11 +246,7 @@ const OffDay = () => {
   // };
 
   const handleuserChange = (selectedOption) => {
-    setSelecteduser(selectedOption);
-    setSelectedoffDay({
-      ...selectedoffDay,
-      user_id: selectedOption ? selectedOption.value : "",
-    });
+    setSelecteduser(selectedOption ||[]);
   };
 
   const handleTypeoffChange = (selectedOption) => {
@@ -207,7 +260,7 @@ const OffDay = () => {
   const handleDelete = async (row) => {
     Swal.fire({
       title: "Kamu Yakin ?",
-      text: `Delete Off Day untuk User : ${row.name} ?`,
+      text: `Delete Off Day untuk Tanggal : ${format(new Date(row.tanggal), "yyyy-MM-dd")} ?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -222,7 +275,7 @@ const OffDay = () => {
       const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
-            `${VITE_API_URL}/management/deleteoffday/${row.id_off}`,
+            `${VITE_API_URL}/management/deleteoffday/${row.id}`,
             {
               deleted_by: userId,
               deleted_at: DateNow,
@@ -231,7 +284,7 @@ const OffDay = () => {
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
           setoffDay((prev) =>
-            prev.filter((item) => item.id_off !== row.id_off)
+            prev.filter((item) => item.id!== row.id)
           );
         } catch (error) {
           Swal.fire(
@@ -251,16 +304,27 @@ const OffDay = () => {
       const userProfile = sessionStorage.getItem("userProfile");
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
+
+
+      let employes_offday = [];
+      if (selecteduser?.length > 0) {
+        employes_offday = selecteduser.map((group) => ({
+          user_id: group.value,
+        }));
+      }
+
+      const payload = {
+        tanggal: selectedoffDay.tanggal,
+        type_off: selectedoffDay.id_type_off,
+        reason: selectedoffDay.reason,
+        employes_offday,
+        updated_by: userId,
+        updated_at: DateNow,
+      };
+
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/management/updateoffday/${selectedoffDay.id_off}`,
-        {
-          user_id: selectedoffDay.user_id,
-          tanggal: selectedoffDay.tanggal,
-          type_off: selectedoffDay.id_type_off,
-          reason: selectedoffDay.reason,
-          updated_by: userId,
-          updated_at: DateNow,
-        },
+        `${VITE_API_URL}/management/updateoffday/${selectedoffDay.id}`,
+        payload,
         { headers }
       );
       //const updatedAbsen = responseUpdate.data.data;
@@ -268,16 +332,16 @@ const OffDay = () => {
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setoffDay((prevOffday) =>
         prevOffday.map((item) =>
-          item.id_off === selectedoffDay.id_off
+          item.id === selectedoffDay.id
             ? {
                 ...selectedoffDay,
                 // name: users.find((u) => u.value === selectedoffDay.user_id)?.label || "",
                 type_off:
                   typeOff.find((r) => r.value === selectedoffDay.id_type_off)
                     ?.label || "",
-                name:
-                  users.find((r) => r.value === selectedoffDay.user_id)
-                    ?.label || "",
+                    name: Array.isArray(selecteduser)&& selecteduser.length > 0
+                    ? selecteduser.map((g) => g.label).join(", ")
+                    : "Semua Karyawan",
               }
             : item
         )
@@ -324,7 +388,7 @@ const OffDay = () => {
     {
       name: (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-          <span style={{ marginBottom: "6px" }}>Tangga</span>
+          <span style={{ marginBottom: "6px" }}>Tanggal</span>
           <input
             type="text"
             value={filterText.tanggal}
@@ -336,6 +400,7 @@ const OffDay = () => {
         </div>
       ),
       selector: (row) => format(new Date(row.tanggal), "yyyy-MM-dd"),
+      // selector: (row) => row.tanggal,
     },
     { name: (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
@@ -352,7 +417,7 @@ const OffDay = () => {
     ),selector: (row) => row.type_off },
     { name: (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ marginBottom: "6px" }}>Type Off/Libur</span>
+        <span style={{ marginBottom: "6px" }}>Keterangan</span>
         <input
           type="text"
           value={filterText.reason}
@@ -478,35 +543,12 @@ const OffDay = () => {
       </div>
 
       {/* Modal Tambah User */}
-      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
+      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Tambah Hari Libur</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="form-group">
-            <label>Karyawan</label>
-            <Select
-              options={users}
-              value={
-                newoffDay.user_id
-                  ? {
-                      value: newoffDay.user_id,
-                      label: users.find((r) => r.value === newoffDay.user_id)
-                        ?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelecteduser(option);
-                setnewoffDay({
-                  ...newoffDay,
-                  user_id: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih Karyawan..."
-              isClearable
-            />
-          </div>
+         
 
           <div className="form-group">
             <label>Tanggal</label>
@@ -518,6 +560,21 @@ const OffDay = () => {
                 setnewoffDay({ ...newoffDay, tanggal: e.target.value })
               }
             />
+          </div>
+          <div className="form-group">
+            <label>Karyawan (
+                <span className="text-secondary text-small">
+                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+                </span>
+                )</label>
+            <Select
+                options={users}
+                isMulti
+                value={selecteduser}
+                onChange={handleuserChange}
+                placeholder="Pilih Karyawan..."
+                isClearable
+              />
           </div>
           <div className="form-group">
             <label>Kategori Libur</label>
@@ -571,23 +628,14 @@ const OffDay = () => {
         </Modal.Footer>
       </Modal>
 
-      <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
+      <Modal show={modalVisible} onHide={() => setModalVisible(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Edit Hari Libur</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">
             <div className="card-body">
-              <div className="form-group">
-                <label> Karyawan</label>
-                <Select
-                  options={users} // Data karyawan
-                  value={selecteduser} // Nilai yang dipilih
-                  onChange={handleuserChange} // Fungsi ketika berubah
-                  placeholder="Pilih Karyawan..."
-                  isClearable // Tambahkan tombol untuk menghapus pilihan
-                />
-              </div>
+             
               <div className="form-group">
                 <label>Tanggal</label>
                 <input
@@ -595,9 +643,7 @@ const OffDay = () => {
                   type="date"
                   value={
                     selectedoffDay.tanggal
-                      ? new Date(selectedoffDay.tanggal)
-                          .toISOString()
-                          .split("T")[0] // Format ke yyyy-MM-dd
+                      ? new Date(selectedoffDay.tanggal).toLocaleDateString("en-CA") // Format YYYY-MM-DD
                       : ""
                   }
                   onChange={(e) =>
@@ -608,9 +654,24 @@ const OffDay = () => {
                   }
                 />
               </div>
+              <div className="form-group">
+                <label> Karyawan (
+                <span className="text-secondary text-small">
+                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+                </span>
+                )</label>
+                <Select
+                  options={users} 
+                  isMulti
+                  value={selecteduser} // Nilai yang dipilih
+                  onChange={(selectedOption) => setSelecteduser(selectedOption)} // Fungsi ketika berubah
+                  placeholder="Pilih Karyawan..."
+                  isClearable // Tambahkan tombol untuk menghapus pilihan
+                />
+              </div>
               
               <div className="form-group">
-                <label> Kageori Libur</label>
+                <label> Kageori Libur </label>
                 <Select
                   options={typeOff} // Data karyawan
                   value={selectedTypeOff} // Nilai yang dipilih
@@ -633,49 +694,14 @@ const OffDay = () => {
                   }
                 />
               </div>
-              {/* <div className="form-group">
-                  <label> Retail / Outlet</label>
-                  <Select
-                    options={retails} // Data karyawan
-                    value={selectedRetail} // Nilai yang dipilih
-                    onChange={handleRetailChange} // Fungsi ketika berubah
-                    placeholder="Pilih retail..."
-                    isClearable // Tambahkan tombol untuk menghapus pilihan
-                  />
-                </div> */}
-              {/* <div className="form-group">
-            <label>user Absen</label>
-            <Select
-              options={users}
-              value={
-                selectedoffDay.user_absen
-                  ? {
-                      value: selectedoffDay.user_absen,
-                      label: users.find(
-                        (r) => r.value === selectedoffDay.user_absen
-                      )?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelecteduser(option);
-                setSelectedoffDay({
-                  ...selectedoffDay,
-                  user_absen: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih user Absen..."
-              isClearable
-            />
-            
-          </div> */}
+             
             </div>
           </div>
         </Modal.Body>
         <Modal.Footer>
           <Button
             className="btn btn-light"
-            onClick={() => setModalVisible(false)}
+            onClick={handleCloseUpdate}
           >
             Close
           </Button>

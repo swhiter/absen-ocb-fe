@@ -69,13 +69,13 @@ const Sidebar = ({ isSidebarOpen }) => {
           <a className="nav-link">
             <div className="nav-profile-image">
               <img
-                src={name.photo_url ? `${VITE_API_IMAGE}${name.photo_url}` : "https://via.placeholder.com/50"}
+                src={name.photo_url ? `${VITE_API_IMAGE}${name.photo_url}` : "/user-icon.jpg"}
                 alt="profile"
               />
               <span className="login-status online"></span>
             </div>
             <div className="nav-profile-text d-flex flex-column">
-              <span className="font-weight-bold mb-2">{name.name || "Nama Dashboard"}</span>
+              <span className="font-weight-bold mb-1 text-small">{name.name || "Nama Dashboard"}</span>
               <span className="text-secondary text-small">{name.category_user}</span>
             </div>
           </a>

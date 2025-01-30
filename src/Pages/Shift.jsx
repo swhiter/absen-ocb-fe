@@ -39,6 +39,34 @@ const Shift = () => {
   const inputRefs = useRef({});
     const [activeInput, setActiveInput] = useState(null);
 
+    const formatShiftData = (data) => {
+      if (!Array.isArray(data)) {
+        if (typeof data === "object" && data !== null) {
+          data = [data]; // Ubah objek menjadi array tunggal
+        } else {
+          return []; // Return array kosong jika bukan array atau objek
+        }
+      }
+  
+      return data.map((item) => {
+        return {
+          id: item.shifting_id,
+          start_date: item.start_date || "",
+          end_date: item.end_date || "",
+          retail_name: item.retail_name || "unknown",
+          retail_id : item.retail_id || 0,
+          name: item.detail_user
+            ? item.detail_user.map((group) => `${group.name}`).join(", ")
+            : "-",
+          employes_id: item.detail_user
+            ? item.detail_user.map((group) => `${group.user_id}`).join(", ")
+            : "-",
+        };
+      });
+    };
+
+  
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -48,15 +76,15 @@ const Shift = () => {
       try {
         // Fetch Shifts
         const shiftResponse = await axios.get(`${VITE_API_URL}/shift-management`, { headers });
-        const shiftData = shiftResponse.data.data || [];
-        const validShifts = shiftData.filter((item) => item && item.name);
-        setShifts(validShifts);
+       
+        const formattedData = formatShiftData(shiftResponse.data.data);
+        setShifts(formattedData);
   
         // Fetch Users
         const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
         const userOptions = userResponse.data.data.map((user) => ({
           value: user.user_id,
-          label: `${user.name} (${user.username})`,
+          label: `${user.name}`,
         }));
         setUsers(userOptions);
   
@@ -66,6 +94,18 @@ const Shift = () => {
             (user) => user.value === selectedShift.user_id
           );
           setSelectedUser(initialUser || null);
+        }
+        if (selectedShift?.employes_id) {
+          const groupIds = selectedShift.employes_id
+            .split(", ")
+            .map((user_id) => Number(user_id.trim())); // Konversi ke number
+          
+        
+          const initialGroups = userOptions.filter((group) =>
+            groupIds.includes(group.value)
+          );
+        
+          setSelectedUser(initialGroups);
         }
   
         // Fetch Retails
@@ -93,7 +133,11 @@ const Shift = () => {
     };
   
     fetchData();
-  }, [selectedShift.user_id, selectedShift.retail_id]);
+  }, [selectedShift?.employes_id, selectedShift.retail_id]);
+
+  const handleChange = (selected) => {
+    setSelectedUser(selected || []);
+  };
 
   // const filteredShift = Shifts.filter(
   //   (item) =>
@@ -118,13 +162,24 @@ const Shift = () => {
       const userProfile = sessionStorage.getItem("userProfile");
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
+
+      let employes_shift = [];
+      if (selectedUser?.length > 0) {
+        employes_shift = selectedUser.map((user) => ({
+          user_id: user.value,
+        }));
+      }
+
+      const payload = {
+        ...newShift,
+        created_by: userId,
+        created_at: DateNow,
+        employes_shift,
+      };
+
       const response = await axios.post(
         `${VITE_API_URL}/shift-management/create`,
-        {
-          ...newShift,
-          created_by: userId,
-          created_at: DateNow,
-        },
+         payload,
         { headers }
       );
   
@@ -136,8 +191,10 @@ const Shift = () => {
         
         {
           ...addedShift,
-          name: users.find((u) => u.value === addedShift.user_id)?.label || "", // Nama user
-          retail_name: retails.find((r) => r.value === addedShift.retail_id)?.label || "", // Nama retail
+          name: Array.isArray(selectedUser) 
+          ? selectedUser.map((g) => g.label).join(", ") 
+          : "Semua Karyawan",
+          retail_name: retails.find((r) => r.value == addedShift.retail_id)?.label || "", // Nama retail
         },...prev,
       ]);
   
@@ -162,7 +219,6 @@ const Shift = () => {
     }
   };
 
-  console.log("Selected Shift:", selectedShift);
   
 
   const handleUpdate = (row) => {
@@ -171,13 +227,6 @@ const Shift = () => {
     setModalVisible(true);
   };
 
-  const handleUserChange = (selectedOption) => {
-    setSelectedUser(selectedOption);
-    setSelectedShift({
-      ...selectedShift,
-      user_id: selectedOption ? selectedOption.value : "",
-    });
-  };
 
   const handleInputChange = (field, value) => {
     setFilterText((prev) => ({
@@ -215,7 +264,7 @@ const Shift = () => {
       const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           await axios.post(
-            `${VITE_API_URL}/shift-management/delete/${row.shifting_id}`,
+            `${VITE_API_URL}/shift-management/delete/${row.id}`,
             {
               deleted_by: userId,
               deleted_at: DateNow,
@@ -224,7 +273,7 @@ const Shift = () => {
           );
           Swal.fire("Deleted!", "Shift has been deleted.", "success");
           setShifts((prev) =>
-            prev.filter((item) => item.shifting_id !== row.shifting_id)
+            prev.filter((item) => item.id !== row.id)
           );
         } catch (error) {
           Swal.fire(
@@ -244,35 +293,46 @@ const Shift = () => {
       const userProfile = sessionStorage.getItem("userProfile");
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
+
+      let employes_shift = [];
+      if (selectedUser?.length > 0) {
+        employes_shift = selectedUser.map((group) => ({
+          user_id: group.value,
+        }));
+      }
+
+      const payload = {
+        start_date: selectedShift.start_date,
+        end_date: selectedShift.end_date,
+        retail_id: selectedShift.retail_id,
+        employes_shift,
+        updated_by: userId,
+        updated_at: DateNow,
+      };
   
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/shift-management/update/${selectedShift.shifting_id}`,
-        {
-          start_date: selectedShift.start_date,
-          end_date: selectedShift.end_date,
-          user_id: selectedShift.user_id,
-          retail_id: selectedShift.retail_id,
-          updated_by: userId,
-          updated_at: DateNow,
-        },
+        `${VITE_API_URL}/shift-management/update/${selectedShift.id}`,
+        payload,
         { headers }
       );
   
-      Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
+     
   
       // Perbarui state Shifts
       setShifts((prevShifts) =>
         prevShifts.map((item) =>
-          item.shifting_id === selectedShift.shifting_id
+          item.id === selectedShift.id
             ? {
                 ...selectedShift,
-                name: users.find((u) => u.value === selectedShift.user_id)?.label || "",
-                retail_name: retails.find((r) => r.value === selectedShift.retail_id)?.label || "",
+                name: Array.isArray(selectedUser)&& selectedUser.length > 0
+                ? selectedUser.map((g) => g.label).join(", ")
+                : "Semua Karyawan",
+                retail_name: retails.find((r) => r.value == selectedShift.retail_id)?.label || "",
               }
             : item
         )
       );
-  
+    Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
       setModalVisible(false);
     } catch (error) {
       Swal.fire(
@@ -342,7 +402,7 @@ const Shift = () => {
     { 
       name: (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-          <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+          <span style={{ marginBottom: "6px" }}>Nama Outlet/Retail</span>
           <input
             type="text"
             value={filterText.retail_name}
@@ -472,7 +532,7 @@ const Shift = () => {
       </div>
 
       {/* Modal Tambah User */}
-      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)}>
+      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Tambah dat Shift</Modal.Title>
         </Modal.Header>
@@ -500,30 +560,7 @@ const Shift = () => {
               }
             />
           </div>
-          <div className="form-group">
-            <label>Nama Karyawan</label>
-            <Select
-              options={users}
-              value={
-                newShift.user_id
-                  ? {
-                      value: newShift.user_id,
-                      label: users.find((u) => u.value === newShift.user_id)
-                        ?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelectedUser(option);
-                setNewShift({
-                  ...newShift,
-                  user_id: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih Karyawan..."
-              isClearable
-            />
-          </div>
+         
           <div className="form-group">
             <label>Nama Retail</label>
             <Select
@@ -547,6 +584,21 @@ const Shift = () => {
               placeholder="Pilih Retail..."
               isClearable
             />
+          </div>
+          <div className="form-group">
+            <label>Nama Karyawan (
+                <span className="text-secondary text-small">
+                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+                </span>
+                )</label>
+            <Select
+                options={users}
+                isMulti
+                value={selectedUser}
+                onChange={handleChange}
+                placeholder="Pilih Karyawan..."
+                isClearable
+              />
           </div>
         </Modal.Body>
         <Modal.Footer>
@@ -601,16 +653,7 @@ const Shift = () => {
                     }
                   />
                 </div>
-                <div className="form-group">
-                  <label>Nama Karyawan</label>
-                  <Select
-                    options={users} // Data karyawan
-                    value={selectedUser} // Nilai yang dipilih
-                    onChange={handleUserChange} // Fungsi ketika berubah
-                    placeholder="Pilih Karyawan..."
-                    isClearable // Tambahkan tombol untuk menghapus pilihan
-                  />
-                </div>
+               
                 <div className="form-group">
                   <label> Retail / Outlet</label>
                   <Select
@@ -618,6 +661,21 @@ const Shift = () => {
                     value={retails.find((retails) => retails.value === parseInt(selectedShift.retail_id, 10)) || null} // Nilai yang dipilih
                     onChange={handleRetailChange} // Fungsi ketika berubah
                     placeholder="Pilih retail..."
+                    isClearable // Tambahkan tombol untuk menghapus pilihan
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Nama Karyawan (
+                <span className="text-secondary text-small">
+                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+                </span>
+                )</label>
+                  <Select
+                    options={users} 
+                    isMulti
+                    value={selectedUser} // Nilai yang dipilih
+                    onChange={(selected) => setSelectedUser(selected)} // Fungsi ketika berubah
+                    placeholder="Pilih Karyawan..."
                     isClearable // Tambahkan tombol untuk menghapus pilihan
                   />
                 </div>

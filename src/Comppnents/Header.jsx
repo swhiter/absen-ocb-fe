@@ -73,7 +73,7 @@ const Header = ({toggleSidebar}) => {
             <li className="nav-item nav-profile dropdown">
               <a className="nav-link dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 <div className="nav-profile-img">
-                  <img src={name?.photo_url ? `${VITE_API_IMAGE}${name?.photo_url}` : "https://via.placeholder.com/50"} alt="profile" />
+                  <img src={name?.photo_url ? `${VITE_API_IMAGE}${name?.photo_url}` : "/user-icon.jpg"} alt="profile" />
                   <span className="availability-status online"></span>
                 </div>
                 <div className="nav-profile-text">

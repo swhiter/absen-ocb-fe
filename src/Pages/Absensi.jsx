@@ -289,7 +289,7 @@ const Absensi = () => {
               src={
                 row?.photo_url
                   ? `${VITE_API_IMAGE}${row.photo_url}`
-                  : "https://via.placeholder.com/50"
+                  : "/absen.jpg"
               }
               alt="Profile"
               style={{
@@ -303,7 +303,7 @@ const Absensi = () => {
                 handleImageAbsensiClick(
                   row?.photo_url
                     ? `${VITE_API_IMAGE}${row.photo_url}`
-                    : "https://via.placeholder.com/50"
+                    : "/absen.jpg"
                 )
               }
             />
