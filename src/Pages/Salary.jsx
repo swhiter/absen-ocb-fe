@@ -194,7 +194,7 @@ const Salary = () => {
     { 
       name: (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-          <span style={{ marginBottom: "6px" }}>Bonus</span>
+          <span style={{ marginBottom: "6px" }}>Bonus/Punishment</span>
           <input
             type="text"
             value={filterText.bonus}
@@ -276,7 +276,7 @@ const Salary = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Salary</h4>
-              <div className="table-responsive">
+              <div className="">
                 {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (

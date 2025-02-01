@@ -206,7 +206,7 @@ const Retail = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Retail / Outlet</h4>
-              <div className="table-responsive">
+              <div className="">
               {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (

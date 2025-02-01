@@ -84,6 +84,7 @@ const OffDay = () => {
         
         setError(null);
       } catch (error) {
+        
         setError(error.response?.data?.message || error.message);
         console.error("Error fetching data:", error);
       } finally {
@@ -468,7 +469,7 @@ const OffDay = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Hari Libur</h4>
-              <div className="table-responsive">
+              <div className="">
                 {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (

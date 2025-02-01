@@ -347,7 +347,7 @@ const Absensi = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Absensi</h4>
-              <div className="table-responsive">
+              <div className="">
                 {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (

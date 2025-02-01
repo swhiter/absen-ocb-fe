@@ -133,6 +133,7 @@ const Shift = () => {
     };
   
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedShift?.employes_id, selectedShift.retail_id]);
 
   const handleChange = (selected) => {
@@ -455,7 +456,7 @@ const Shift = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Shift</h4>
-              <div className="table-responsive">
+              <div className="">
                 {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (

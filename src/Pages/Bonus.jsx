@@ -469,7 +469,7 @@ const Bonus = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Bonus</h4>
-              <div className="table-responsive">
+              <div className="">
                 {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (
@@ -605,7 +605,11 @@ const Bonus = () => {
           </div>
 
           <div className="form-group">
-            <label>Bonus/Punishment </label>
+            <label>Jumlah Bonus/Punishment  (
+                <span className="text-secondary text-small">
+                  isi menggunakan tanda minus (-) untuk punishment, ex (-10000)
+                </span>
+                )</label>
             <input
               type="number"
               className="form-control"

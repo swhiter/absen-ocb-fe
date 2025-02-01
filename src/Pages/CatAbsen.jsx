@@ -520,7 +520,7 @@ const CatAbsen = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Kategori Absen</h4>
-              <div className="table-responsive">
+              <div className="">
                 {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (

@@ -16,6 +16,8 @@ import Salary from "./Pages/Salary";
 import RolesAndCategory from "./Pages/RolesAndCategory";
 import MenuCategory from "./Pages/MenuCategory";
 import Potongan from "./Pages/Potongan";
+import Laporan from "./Pages/Laporan";
+// import Profile from "./Pages/Profile"
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,6 +56,9 @@ function App() {
                     <Route path="/management-user" element={<RolesAndCategory />} />
                     <Route path="/menu-category" element={<MenuCategory />} />
                     <Route path="/potongan" element={<Potongan />} />
+                    <Route path="/laporan" element={<Laporan />} />
+                    {/* <Route path="/profile" element={<Profile />} /> */}
+
                   </Routes>
                 </div>
               </div>
