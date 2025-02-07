@@ -6,6 +6,7 @@ import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import { format } from "date-fns";
 import Select from "react-select";
+import { Tooltip } from "react-tooltip";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
@@ -80,35 +81,26 @@ const Shift = () => {
         const formattedData = formatShiftData(shiftResponse.data.data);
         setShifts(formattedData);
   
-        // Fetch Users
-        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
-        const userOptions = userResponse.data.data.map((user) => ({
-          value: user.user_id,
-          label: `${user.name}`,
-        }));
-        setUsers(userOptions);
+       
   
-        // Sync initial user if exists
-        if (selectedShift.user_id) {
-          const initialUser = userOptions.find(
-            (user) => user.value === selectedShift.user_id
-          );
-          setSelectedUser(initialUser || null);
-        }
-        if (selectedShift?.employes_id) {
-          const groupIds = selectedShift.employes_id
-            .split(", ")
-            .map((user_id) => Number(user_id.trim())); // Konversi ke number
-          
-        
-          const initialGroups = userOptions.filter((group) =>
-            groupIds.includes(group.value)
-          );
-        
-          setSelectedUser(initialGroups);
-        }
+        setError(null);
+      } catch (error) {
+        setError(error.response?.data?.message || error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
   
-        // Fetch Retails
+    fetchData();
+   }, []);
+
+
+  useEffect(() => {
+    const fetchSelect = async () => {
+      try{
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+
         const retailResponse = await axios.get(`${VITE_API_URL}/retail`, { headers });
         const retailOptions = retailResponse.data.data.map((retail) => ({
           value: retail.retail_id,
@@ -123,18 +115,37 @@ const Shift = () => {
           );
           setSelectedRetail(initialRetail || null);
         }
-  
-        setError(null);
-      } catch (error) {
-        setError(error.response?.data?.message || error.message);
-      } finally {
-        setLoading(false);
+
+         // Fetch Users
+         const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
+         const userOptions = userResponse.data.data.map((user) => ({
+           value: user.user_id,
+           label: `${user.name}`,
+         }));
+         setUsers(userOptions);
+   
+         
+         if (selectedShift?.employes_id) {
+           const groupIds = selectedShift.employes_id
+             .split(", ")
+             .map((user_id) => Number(user_id.trim())); // Konversi ke number
+           
+         
+           const initialGroups = userOptions.filter((group) =>
+             groupIds.includes(group.value)
+           );
+         
+           setSelectedUser(initialGroups);
+         }
+
+
+      }catch(error){
+        console.error("Failed to fetch group:", error);
       }
+
     };
-  
-    fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedShift?.employes_id, selectedShift.retail_id]);
+    fetchSelect();
+  },[selectedShift?.employes_id, selectedShift.retail_id]);
 
   const handleChange = (selected) => {
     setSelectedUser(selected || []);
@@ -399,6 +410,38 @@ const Shift = () => {
           />
         </div>
       ), 
+      cell: (row) => {
+        // Format teks tooltip: setiap 2 kata setelah koma, masuk ke baris baru
+        const formattedText = row.name
+          .split(",")
+          .map((item, index) => (index % 2 === 1 ? item + "\n" : item)) // Tambah newline
+          .join(" |");
+
+        return (
+          <div>
+            <span data-tooltip-id={`tooltip-${row.name}`}>
+              {row.name.length > 30
+                ? row.name.substring(0, 25) + "..."
+                : row.name}
+            </span>
+            <Tooltip
+              id={`tooltip-${row.name}`}
+              place="top"
+              effect="solid"
+              style={{
+                backgroundColor: "#FAD9CF", // Ubah background tooltip ke orange
+                color: "black", // Warna teks agar kontras
+                borderRadius: "8px",
+                padding: "8px",
+                whiteSpace: "pre-line",
+                zIndex: 9999,
+              }} // Tambahkan white-space agar newline terbaca
+            >
+              {formattedText}
+            </Tooltip>
+          </div>
+        );
+      },
       selector: (row) => row.name },
     { 
       name: (
@@ -535,7 +578,7 @@ const Shift = () => {
       {/* Modal Tambah User */}
       <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Tambah dat Shift</Modal.Title>
+          <Modal.Title>Tambah Data Shift</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="form-group">

@@ -6,6 +6,7 @@ import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import { format } from "date-fns";
 import Select from "react-select";
+import { Tooltip } from "react-tooltip";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
@@ -80,28 +81,28 @@ const Bonus = () => {
         const formattedData = formatBonusDayData(bonusResponse.data.data);
         // const validBonusData = bonusData.filter((item) => item && item.name);
         setbonus(formattedData);
-  
-        // Fetch user data
-        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
-        const userOptions = userResponse.data.data.map((user) => ({
-          value: user.user_id,
-          label: user.name,
-        }));
-        setusers(userOptions);
-  
-        // Set selected user if `selectedbonus.user_id` exists
-        if (selectedbonus?.employes_id) {
-          const groupIds = selectedbonus.employes_id
-            .split(", ")
-            .map((user_id) => Number(user_id.trim())); // Konversi ke number
-          
+
         
-          const initialGroups = userOptions.filter((group) =>
-            groupIds.includes(group.value)
-          );
-        
-          setSelecteduser(initialGroups);
-        }
+        // Clear errors
+        setError(null);
+      } catch (error) {
+        setError(error.response?.data?.message || error.message);
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
+
+  useEffect(() => {
+    const fetchSelect = async () => {
+
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
 
         // Fetch Type Off
         const typePBResponse = await axios.get(`${VITE_API_URL}/management/type-pb`, { headers });
@@ -117,21 +118,37 @@ const Bonus = () => {
           );
           setSelectedTypePB(initialTypePB|| null);
         }
-  
-        // Clear errors
-        setError(null);
-      } catch (error) {
-        setError(error.response?.data?.message || error.message);
-        console.error("Failed to fetch data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchData();
-  }, [selectedbonus.employes_id, selectedbonus.id_type_pb]);
-  
 
+         // Fetch user data
+         const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
+         const userOptions = userResponse.data.data.map((user) => ({
+           value: user.user_id,
+           label: user.name,
+         }));
+         setusers(userOptions);
+   
+         // Set selected user if `selectedbonus.user_id` exists
+         if (selectedbonus?.employes_id) {
+           const groupIds = selectedbonus.employes_id
+             .split(", ")
+             .map((user_id) => Number(user_id.trim())); // Konversi ke number
+           
+         
+           const initialGroups = userOptions.filter((group) =>
+             groupIds.includes(group.value)
+           );
+         
+           setSelecteduser(initialGroups);
+         }
+  
+      } catch (error) {
+        console.error("Failed to fetch group:", error);
+      }
+
+    };
+
+    fetchSelect();
+  }, [selectedbonus?.employes_id, selectedbonus?.id_type_pb]);
   // const filteredbonus = bonus.filter(
   //   (item) =>
   //     item.name?.toLowerCase().includes(search.toLowerCase())
@@ -368,7 +385,39 @@ const Bonus = () => {
           onFocus={() => setActiveInput('name')} // Set active input
         />
       </div>
-    ), selector: (row) => row.name },
+    ), 
+    cell: (row) => {
+      // Format teks tooltip: setiap 2 kata setelah koma, masuk ke baris baru
+      const formattedText = row.name
+        .split(",")
+        .map((item, index) => (index % 2 === 1 ? item + "\n" : item)) // Tambah newline
+        .join(" |");
+
+      return (
+        <div>
+          <span data-tooltip-id={`tooltip-${row.name}`}>
+            {row.name.length > 30
+              ? row.name.substring(0, 25) + "..."
+              : row.name}
+          </span>
+          <Tooltip
+            id={`tooltip-${row.name}`}
+            place="top"
+            effect="solid"
+            style={{
+              backgroundColor: "#FAD9CF", // Ubah background tooltip ke orange
+              color: "black", // Warna teks agar kontras
+              borderRadius: "8px",
+              padding: "8px",
+              whiteSpace: "pre-line",
+              zIndex: 9999,
+            }} // Tambahkan white-space agar newline terbaca
+          >
+            {formattedText}
+          </Tooltip>
+        </div>
+      );
+    },selector: (row) => row.name },
     {
       name: (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>

@@ -243,6 +243,8 @@ const Users = () => {
         }
 
         formData.append("photo_url", file);
+      }else{
+        formData.append("photo_url", null);
       }
 
       const response = await axios.post(
@@ -688,8 +690,8 @@ const Users = () => {
             }
             alt="Profile"
             style={{
-              width: "60px",
-              height: "60px",
+              width: "40px",
+              height: "40px",
               borderRadius: "10%",
               cursor: "pointer",
             }}
@@ -1101,7 +1103,7 @@ const Users = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Nama Karyawan</label>
+                  <label>Nama Atasan</label>
                   <Select
                     options={uplines} // Data karyawan
                     value={selectedUpline} // Nilai yang dipilih

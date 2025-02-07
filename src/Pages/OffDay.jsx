@@ -6,6 +6,7 @@ import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import { format } from "date-fns";
 import Select from "react-select";
+import { Tooltip } from "react-tooltip";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
@@ -23,8 +24,9 @@ const OffDay = () => {
     type_off: "",
     tanggal: "",
     reason: "",
-    employes_id : "",
+    employes_id: "",
     name: "",
+    
   });
   const [typeOff, settypeOff] = useState([]);
   const [selectedTypeOff, setSelectedTypeOff] = useState(null);
@@ -36,13 +38,10 @@ const OffDay = () => {
     tanggal: "",
     type_off: "",
     reason: "",
-    
-  
-
   });
   const inputRefs = useRef({});
   const [activeInput, setActiveInput] = useState(null);
-  
+
   const formatOffDayData = (data) => {
     if (!Array.isArray(data)) {
       if (typeof data === "object" && data !== null) {
@@ -52,13 +51,13 @@ const OffDay = () => {
       }
     }
 
-    return data.map((item,) => {
+    return data.map((item) => {
       return {
         id: item.id_offday,
         tanggal: item.tanggal || "",
         type_off: item.type_off || "Unknown",
         reason: item.reason || "Unknown",
-        id_type_off : item.id_type_off,
+        id_type_off: item.id_type_off,
         name: item.detail_user
           ? item.detail_user.map((group) => `${group.name}`).join(", ")
           : "-",
@@ -69,29 +68,30 @@ const OffDay = () => {
     });
   };
 
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-  
+
       try {
         // Fetch Off Day
-        const offDayResponse = await axios.get(`${VITE_API_URL}/management/offday`, { headers });
+        const offDayResponse = await axios.get(
+          `${VITE_API_URL}/management/offday`,
+          { headers }
+        );
         const formattedData = formatOffDayData(offDayResponse.data.data);
         setoffDay(formattedData);
-        
+
         setError(null);
       } catch (error) {
-        
         setError(error.response?.data?.message || error.message);
         console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, []);
 
@@ -100,14 +100,17 @@ const OffDay = () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-  
-        const typeOffResponse = await axios.get(`${VITE_API_URL}/management/type-off`, { headers });
+
+        const typeOffResponse = await axios.get(
+          `${VITE_API_URL}/management/type-off`,
+          { headers }
+        );
         const typeOffOptions = typeOffResponse.data.data.map((typeoff) => ({
           value: typeoff.id,
           label: typeoff.type_off,
         }));
         settypeOff(typeOffOptions);
-  
+
         // Update selected group jika ada group_absen di selectedCatabsen
         if (selectedoffDay?.id_type_off) {
           const initialTypeOff = typeOff.find(
@@ -116,7 +119,9 @@ const OffDay = () => {
           setSelectedTypeOff(initialTypeOff || null);
         }
 
-        const userResponse = await axios.get(`${VITE_API_URL}/users`, { headers });
+        const userResponse = await axios.get(`${VITE_API_URL}/users`, {
+          headers,
+        });
         const userOptions = userResponse.data.data.map((user) => ({
           value: user.user_id,
           label: user.name,
@@ -126,35 +131,31 @@ const OffDay = () => {
           const groupIds = selectedoffDay.employes_id
             .split(", ")
             .map((user_id) => Number(user_id.trim())); // Konversi ke number
-          
-        
+
           const initialGroups = userOptions.filter((group) =>
             groupIds.includes(group.value)
           );
-        
+
           setSelecteduser(initialGroups);
         }
       } catch (error) {
         console.error("Failed to fetch group:", error);
       }
     };
-  
-    fetchSelect();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedoffDay?.employes_id, selectedoffDay?.id_type_off]);
 
+    fetchSelect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedoffDay?.employes_id, selectedoffDay?.id_type_off]);
 
   const filteredoffDay = offDay.filter((item) =>
     Object.keys(filterText).every((key) => {
       const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
       const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
-  
+
       // Pastikan bahwa itemValue mengandung filterValue
       return itemValue.includes(filterValue);
     })
   );
-
-  
 
   const handleInputChange = (field, value) => {
     setFilterText((prev) => ({
@@ -162,8 +163,7 @@ const OffDay = () => {
       [field]: value,
     }));
   };
-  
-  
+
   console.log("Selected offDay:", selectedoffDay);
   console.log("typeOff:", typeOff);
   console.log("Selected typeOff:", selectedTypeOff);
@@ -200,15 +200,20 @@ const OffDay = () => {
 
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setoffDay((prev) => [
-       
         {
           ...addedOffday,
           // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
           type_off:
             typeOff.find((r) => r.value === addedOffday.type_off)?.label || "", // Nama retail
-            name: Array.isArray(selecteduser) && selecteduser.length > 0
-            ? selecteduser.map((g) => g.label).join(", ") 
-            : "Semua Karyawan",
+          name:
+            Array.isArray(selecteduser) && selecteduser.length > 0
+              ? selecteduser.map((g) => g.label).join(", ")
+              : "Semua Karyawan",
+          id_type_off: addedOffday.type_off || "",
+          employes_id:
+            Array.isArray(selecteduser) && selecteduser.length > 0
+              ? selecteduser.map((g) => g.value).join(", ") // Ambil ID karyawan
+              : "",
         },
         ...prev,
       ]);
@@ -216,7 +221,13 @@ const OffDay = () => {
       // setoffDay((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewoffDay({ user_id: "", tanggal: "", type_off: "", reason: "", employes_id: "" });
+      setnewoffDay({
+        user_id: "",
+        tanggal: "",
+        type_off: "",
+        reason: "",
+        employes_id: "",
+      });
       setSelectedTypeOff(null);
     } catch (error) {
       Swal.fire(
@@ -228,12 +239,12 @@ const OffDay = () => {
   };
 
   const handleUpdate = (row) => {
+    console.log("Row data sebelum update:", row);
     setSelectedoffDay(row);
     setModalVisible(true);
   };
 
-  const handleCloseUpdate = () =>
-  {
+  const handleCloseUpdate = () => {
     setSelectedoffDay([]);
     setModalVisible(false);
   };
@@ -247,7 +258,7 @@ const OffDay = () => {
   // };
 
   const handleuserChange = (selectedOption) => {
-    setSelecteduser(selectedOption ||[]);
+    setSelecteduser(selectedOption || []);
   };
 
   const handleTypeoffChange = (selectedOption) => {
@@ -261,7 +272,10 @@ const OffDay = () => {
   const handleDelete = async (row) => {
     Swal.fire({
       title: "Kamu Yakin ?",
-      text: `Delete Off Day untuk Tanggal : ${format(new Date(row.tanggal), "yyyy-MM-dd")} ?`,
+      text: `Delete Off Day untuk Tanggal : ${format(
+        new Date(row.tanggal),
+        "yyyy-MM-dd"
+      )} ?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -272,8 +286,8 @@ const OffDay = () => {
         try {
           const token = localStorage.getItem("token");
           const userProfile = sessionStorage.getItem("userProfile");
-      const userData = JSON.parse(userProfile); // Parse JSON
-      const userId = userData[0]?.user_id;
+          const userData = JSON.parse(userProfile); // Parse JSON
+          const userId = userData[0]?.user_id;
           const headers = { Authorization: `Bearer ${token}` };
           const responseDelete = await axios.post(
             `${VITE_API_URL}/management/deleteoffday/${row.id}`,
@@ -284,9 +298,7 @@ const OffDay = () => {
             { headers }
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
-          setoffDay((prev) =>
-            prev.filter((item) => item.id!== row.id)
-          );
+          setoffDay((prev) => prev.filter((item) => item.id !== row.id));
         } catch (error) {
           Swal.fire(
             "Error!",
@@ -305,7 +317,6 @@ const OffDay = () => {
       const userProfile = sessionStorage.getItem("userProfile");
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
-
 
       let employes_offday = [];
       if (selecteduser?.length > 0) {
@@ -340,7 +351,8 @@ const OffDay = () => {
                 type_off:
                   typeOff.find((r) => r.value === selectedoffDay.id_type_off)
                     ?.label || "",
-                    name: Array.isArray(selecteduser)&& selecteduser.length > 0
+                name:
+                  Array.isArray(selecteduser) && selecteduser.length > 0
                     ? selecteduser.map((g) => g.label).join(", ")
                     : "Semua Karyawan",
               }
@@ -366,29 +378,73 @@ const OffDay = () => {
 
   const columns = [
     {
-      name: (
-        <span style={{ marginBottom: "45px" }}>#</span>
-      ),
+      name: <span style={{ marginBottom: "45px" }}>#</span>,
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { name: (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
-        <input
-          type="text"
-          value={filterText.name}
-          className="form-control mt-1 filter-header"
-          ref={(el) => (inputRefs.current.name = el)}
-          onChange={(e) => handleInputChange("name", e.target.value)}
-          onFocus={() => setActiveInput('name')} // Set active input
-        />
-      </div>
-    ),
-     selector: (row) => row.name },
     {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
+          <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
+          <input
+            type="text"
+            value={filterText.name}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.name = el)}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            onFocus={() => setActiveInput("name")} // Set active input
+          />
+        </div>
+      ),
+      cell: (row) => {
+        // Format teks tooltip: setiap 2 kata setelah koma, masuk ke baris baru
+        const formattedText = row.name
+          .split(",")
+          .map((item, index) => (index % 2 === 1 ? item + "\n" : item)) // Tambah newline
+          .join(" |");
+
+        return (
+          <div>
+            <span data-tooltip-id={`tooltip-${row.name}`}>
+              {row.name.length > 30
+                ? row.name.substring(0, 25) + "..."
+                : row.name}
+            </span>
+            <Tooltip
+              id={`tooltip-${row.name}`}
+              place="top"
+              effect="solid"
+              style={{
+                backgroundColor: "#FAD9CF", // Ubah background tooltip ke orange
+                color: "black", // Warna teks agar kontras
+                borderRadius: "8px",
+                padding: "8px",
+                whiteSpace: "pre-line",
+                zIndex: 9999,
+              }} // Tambahkan white-space agar newline terbaca
+            >
+              {formattedText}
+            </Tooltip>
+          </div>
+        );
+      },
+      selector: (row) => row.name,
+    },
+    {
+      name: (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Tanggal</span>
           <input
             type="text"
@@ -396,44 +452,60 @@ const OffDay = () => {
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.tanggal = el)}
             onChange={(e) => handleInputChange("tanggal", e.target.value)}
-            onFocus={() => setActiveInput('tanggal')} // Set active input
+            onFocus={() => setActiveInput("tanggal")} // Set active input
           />
         </div>
       ),
       selector: (row) => format(new Date(row.tanggal), "yyyy-MM-dd"),
       // selector: (row) => row.tanggal,
     },
-    { name: (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ marginBottom: "6px" }}>Type Off/Libur</span>
-        <input
-          type="text"
-          value={filterText.type_off}
-          className="form-control mt-1 filter-header"
-          ref={(el) => (inputRefs.current.type_off = el)}
-          onChange={(e) => handleInputChange("type_off", e.target.value)}
-          onFocus={() => setActiveInput('type_off')} // Set active input
-        />
-      </div>
-    ),selector: (row) => row.type_off },
-    { name: (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ marginBottom: "6px" }}>Keterangan</span>
-        <input
-          type="text"
-          value={filterText.reason}
-          className="form-control mt-1 filter-header"
-          ref={(el) => (inputRefs.current.reason = el)}
-          onChange={(e) => handleInputChange("reason", e.target.value)}
-          onFocus={() => setActiveInput('reason')} // Set active input
-        />
-      </div>
-    ), selector: (row) => row.reason },
-
     {
       name: (
-        <span style={{ marginBottom: "45px" }}>Action</span>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
+          <span style={{ marginBottom: "6px" }}>Type Off/Libur</span>
+          <input
+            type="text"
+            value={filterText.type_off}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.type_off = el)}
+            onChange={(e) => handleInputChange("type_off", e.target.value)}
+            onFocus={() => setActiveInput("type_off")} // Set active input
+          />
+        </div>
       ),
+      selector: (row) => row.type_off,
+    },
+    {
+      name: (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
+          <span style={{ marginBottom: "6px" }}>Keterangan</span>
+          <input
+            type="text"
+            value={filterText.reason}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.reason = el)}
+            onChange={(e) => handleInputChange("reason", e.target.value)}
+            onFocus={() => setActiveInput("reason")} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.reason,
+    },
+
+    {
+      name: <span style={{ marginBottom: "45px" }}>Action</span>,
       cell: (row) => (
         <div className="action-buttons">
           <button
@@ -450,7 +522,7 @@ const OffDay = () => {
           </button>
         </div>
       ),
-    }
+    },
   ];
 
   useEffect(() => {
@@ -481,17 +553,14 @@ const OffDay = () => {
                         <button
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
-                          style={{marginBottom:"30px"}}
+                          style={{ marginBottom: "30px" }}
                         >
                           Tambah Hari Libur
                         </button>
                       </div>
                       <div className="col-sm-4">
                         <div className="input-group">
-                          <div className="input-group-prepend bg-transparent">
-                            
-                          </div>
-                          
+                          <div className="input-group-prepend bg-transparent"></div>
                         </div>
                       </div>
                     </div>
@@ -505,35 +574,42 @@ const OffDay = () => {
                       />
                     ) : (
                       <div className="table-responsive">
-                      <table className="table">
-                        <thead>
-                          <tr>
-                            {columns.map((col, index) => (
-                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredoffDay.length > 0 ? (
-                            filteredoffDay.map((row, index) => (
-                              <tr key={index}>
-                                {columns.map((col, colIndex) => (
-                                  <td key={colIndex} >
-                                    {col.cell ? col.cell(row) : col.selector(row)}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))
-                          ) : (
+                        <table className="table">
+                          <thead>
                             <tr>
-                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
-                                <em>No data found</em>
-                              </td>
+                              {columns.map((col, index) => (
+                                <th key={index} style={{ fontSize: "12px" }}>
+                                  {col.name}
+                                </th>
+                              ))}
                             </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {filteredoffDay.length > 0 ? (
+                              filteredoffDay.map((row, index) => (
+                                <tr key={index}>
+                                  {columns.map((col, colIndex) => (
+                                    <td key={colIndex}>
+                                      {col.cell
+                                        ? col.cell(row)
+                                        : col.selector(row)}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan={columns.length}
+                                  style={{ textAlign: "center" }}
+                                >
+                                  <em>No data found</em>
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </>
                 )}
@@ -544,13 +620,15 @@ const OffDay = () => {
       </div>
 
       {/* Modal Tambah User */}
-      <Modal show={addModalVisible} onHide={() => setAddModalVisible(false)} size="lg">
+      <Modal
+        show={addModalVisible}
+        onHide={() => setAddModalVisible(false)}
+        size="lg"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Tambah Hari Libur</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-         
-
           <div className="form-group">
             <label>Tanggal</label>
             <input
@@ -563,19 +641,21 @@ const OffDay = () => {
             />
           </div>
           <div className="form-group">
-            <label>Karyawan (
-                <span className="text-secondary text-small">
-                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
-                </span>
-                )</label>
+            <label>
+              Karyawan (
+              <span className="text-secondary text-small">
+                Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+              </span>
+              )
+            </label>
             <Select
-                options={users}
-                isMulti
-                value={selecteduser}
-                onChange={handleuserChange}
-                placeholder="Pilih Karyawan..."
-                isClearable
-              />
+              options={users}
+              isMulti
+              value={selecteduser}
+              onChange={handleuserChange}
+              placeholder="Pilih Karyawan..."
+              isClearable
+            />
           </div>
           <div className="form-group">
             <label>Kategori Libur</label>
@@ -629,14 +709,17 @@ const OffDay = () => {
         </Modal.Footer>
       </Modal>
 
-      <Modal show={modalVisible} onHide={() => setModalVisible(false)} size="lg">
+      <Modal
+        show={modalVisible}
+        onHide={() => setModalVisible(false)}
+        size="lg"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Edit Hari Libur</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">
             <div className="card-body">
-             
               <div className="form-group">
                 <label>Tanggal</label>
                 <input
@@ -644,7 +727,9 @@ const OffDay = () => {
                   type="date"
                   value={
                     selectedoffDay.tanggal
-                      ? new Date(selectedoffDay.tanggal).toLocaleDateString("en-CA") // Format YYYY-MM-DD
+                      ? new Date(selectedoffDay.tanggal).toLocaleDateString(
+                          "en-CA"
+                        ) // Format YYYY-MM-DD
                       : ""
                   }
                   onChange={(e) =>
@@ -656,13 +741,16 @@ const OffDay = () => {
                 />
               </div>
               <div className="form-group">
-                <label> Karyawan (
-                <span className="text-secondary text-small">
-                  Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
-                </span>
-                )</label>
+                <label>
+                  {" "}
+                  Karyawan (
+                  <span className="text-secondary text-small">
+                    Kosongkan karyawan jika tujuan nya untuk Semua Karyawan
+                  </span>
+                  )
+                </label>
                 <Select
-                  options={users} 
+                  options={users}
                   isMulti
                   value={selecteduser} // Nilai yang dipilih
                   onChange={(selectedOption) => setSelecteduser(selectedOption)} // Fungsi ketika berubah
@@ -670,7 +758,7 @@ const OffDay = () => {
                   isClearable // Tambahkan tombol untuk menghapus pilihan
                 />
               </div>
-              
+
               <div className="form-group">
                 <label> Kageori Libur </label>
                 <Select
@@ -695,15 +783,11 @@ const OffDay = () => {
                   }
                 />
               </div>
-             
             </div>
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            className="btn btn-light"
-            onClick={handleCloseUpdate}
-          >
+          <Button className="btn btn-light" onClick={handleCloseUpdate}>
             Close
           </Button>
           <Button

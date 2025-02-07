@@ -107,11 +107,54 @@
 /* === Import template variables === */
 /*-------------------------------------------------------------------*/
 /* === SCSS Compass Functions === */
+
+.password-rules p {
+  font-size: 14px;
+  margin: 5px 0;
+  transition: color 0.3s;
+}
+
+.valid {
+  color: green;
+  font-weight: bold;
+}
+
+.invalid {
+  color: red;
+  font-weight: normal;
+}
+
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+  font-size: 18px;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
 .action-buttons {
   display: flex;
   gap: 10px;
   flex-wrap: nowrap;
 }
+/* src/assets/css/style.css */
+* {
+  font-family: "Inter", sans-serif;
+  /* font-weight: 300; */
+}
+
 
 .action-buttons button {
   flex: 1 1 auto;
@@ -12842,6 +12885,7 @@ textarea.is-invalid.tt-hint, .select2-container--default .select2-selection--sin
 .card > .list-group + .card-footer {
   border-top: 0;
 }
+
 
 .card-body {
   flex: 1 1 auto;
@@ -25690,7 +25734,7 @@ dl li {
   -webkit-align-items: center;
   align-items: center;
   white-space: nowrap;
-  padding: 1.125rem 0 1.125rem 0;
+  padding: 1.125rem 0 1.0rem 0;
   color: #3e4b5b;
   -webkit-transition-duration: 0.45s;
   -moz-transition-duration: 0.45s;
@@ -25767,7 +25811,7 @@ dl li {
   color: #b66dff;
 }
 .sidebar .nav .nav-item:hover {
-  background: #fcfcfc;
+  background: #FAD9CF;
 }
 .sidebar .nav .nav-item.nav-profile .nav-link {
   height: auto;

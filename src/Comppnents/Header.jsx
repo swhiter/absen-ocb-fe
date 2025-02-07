@@ -4,6 +4,7 @@ const VITE_API_IMAGE = import.meta.env.VITE_API_IMAGE;
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 import axios from "axios";
 import Swal from "sweetalert2";
+import { Link } from "react-router-dom";
 
 // const userId = userData?.id;
 const Header = ({toggleSidebar}) => {
@@ -81,8 +82,12 @@ const Header = ({toggleSidebar}) => {
                 </div>
               </a>
               <div className="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">
-                <a className="dropdown-item" href="#">
-                  <i className="mdi mdi-account-file-text me-2 text-success"></i> Profile </a>
+                
+                <Link className="dropdown-item" to='/profile'>
+                <i className="mdi mdi-account-file-text me-2 text-success"></i> 
+                Profile
+                        </Link>
+                 
                 <div className="dropdown-divider"></div>
                 <a className="dropdown-item" onClick={(handleLogout)}>
                   <i className="mdi mdi-logout me-2 text-primary"></i> LogOut </a>

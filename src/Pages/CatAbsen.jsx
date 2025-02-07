@@ -6,6 +6,7 @@ import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import { format } from "date-fns";
 import Select from "react-select";
+import { Tooltip } from "react-tooltip";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
@@ -408,22 +409,6 @@ const CatAbsen = () => {
     },
 
     {
-      //   name: (
-      //     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      //       <span style={{ marginBottom: "6px" }}>Retail</span>
-      //       <input
-      //         type="text"
-      //         value={filterText.retail_name}
-      //         className="form-control mt-1 filter-header"
-      //         ref={(el) => (inputRefs.current.retail_name = el)}
-      //         onChange={(e) => handleInputChange("retail_name", e.target.value)}
-      //         onFocus={() => setActiveInput('retail_name')} // Set active input
-      //       />
-      //     </div>
-      //   ),
-      //   selector: (row) => row.retail_name },
-
-      // {
       name: (
         <div
           style={{
@@ -480,13 +465,45 @@ const CatAbsen = () => {
           />
         </div>
       ),
+      cell: (row) => {
+        // Format teks tooltip: setiap 2 kata setelah koma, masuk ke baris baru
+        const formattedText = row.category_user
+          .split(",")
+          .map((item, index) => (index % 2 === 1 ? item + "\n" : item)) // Tambah newline
+          .join(" |");
+
+        return (
+          <div>
+            <span data-tooltip-id={`tooltip-${row.category_user}`}>
+              {row.category_user.length > 30
+                ? row.category_user.substring(0, 20) + "..."
+                : row.category_user}
+            </span>
+            <Tooltip
+              id={`tooltip-${row.category_user}`}
+              place="top"
+              effect="solid"
+              style={{
+                backgroundColor: "#FAD9CF", // Ubah background tooltip ke orange
+                color: "black", // Warna teks agar kontras
+                borderRadius: "8px",
+                padding: "8px",
+                whiteSpace: "pre-line",
+                zIndex: 9999,
+              }} // Tambahkan white-space agar newline terbaca
+            >
+              {formattedText}
+            </Tooltip>
+          </div>
+        );
+      },
       selector: (row) => row.category_user,
     },
 
     {
       name: "Action",
       cell: (row) => (
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="action-buttons">
           <button
             className="btn btn-gradient-warning btn-sm"
             onClick={() => handleUpdate(row)}
