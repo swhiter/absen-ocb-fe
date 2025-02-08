@@ -70,7 +70,7 @@ const Retail = () => {
         { headers }
       );
 
-      setRetails((prev) => [...prev, response.data.data]);
+      setRetails((prev) => [ response.data.data, ...prev,]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
       setNewRetail({ name: "", latitude: "", longitude: "", radius: "", is_active: 1 });
@@ -81,6 +81,7 @@ const Retail = () => {
 
   const handleUpdate = (row) => {
     setSelectedRetail(row);
+    console.log(selectedRetail);
     setModalVisible(true);
   };
 
@@ -113,6 +114,8 @@ const Retail = () => {
       }
     });
   };
+
+  
 
   const handleSaveUpdate = async () => {
     try {

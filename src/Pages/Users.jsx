@@ -69,6 +69,23 @@ const Users = () => {
         );
         setUsers(validOffDayData);
 
+        setError(null);
+      } catch (error) {
+        setError(error.response?.data?.message || error.message);
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchSelect = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
         const rolesResponse = await axios.get(`${VITE_API_URL}/users/roles`, {
           headers,
         });
@@ -97,11 +114,12 @@ const Users = () => {
 
         if (selectedUser.id_category) {
           const initialTypeOff = categoryOptions.find(
-            (category) => category.value === selectedUser.id_category
+            (category) => category.value == selectedUser.id_category
           );
           setSelectedCategory(initialTypeOff || null);
         }
 
+        
         // Fetch Users
         const uplineResponse = await axios.get(`${VITE_API_URL}/users`, {
           headers,
@@ -119,16 +137,11 @@ const Users = () => {
           setSelectedUpline(initialUser || null);
         }
 
-        setError(null);
       } catch (error) {
-        setError(error.response?.data?.message || error.message);
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+        console.error("Failed to fetch group:", error);
       }
-    };
-
-    fetchData();
+    }
+    fetchSelect();
   }, [selectedUser.role_id, selectedUser.id_upline, selectedUser.id_category]);
 
   const handleImageClick = (imageUrl) => {
@@ -186,7 +199,7 @@ const Users = () => {
     setSelectedCategory(selectedOption);
     setSelectedUser({
       ...selectedUser,
-      id_category: selectedOption ? selectedOption.value : null, // Pastikan data upline terupdate
+      id_category: selectedOption ? selectedOption.value : null, 
     });
   };
 
@@ -219,7 +232,7 @@ const Users = () => {
       formData.append("enabled", newUser.enabled);
       // formData.append("role", newUser.role_id);
       formData.append("upline", newUser.upline);
-      formData.append("category_user", newUser.id_category);
+      formData.append("id_category", newUser.id_category);
       formData.append("created_by", userId);
       formData.append("created_at", DateNow);
       // formData.append("upline", selectedUpline ? selectedUpline.value : 0);
@@ -267,9 +280,9 @@ const Users = () => {
             category.find(
               (category) =>
                 category.value ===
-                (isNaN(addedUsers.category_user)
+                (isNaN(addedUsers.id_category)
                   ? null
-                  : parseInt(addedUsers.category_user))
+                  : parseInt(addedUsers.id_category))
             )?.label || null,
           role:
             roles.find(
@@ -463,7 +476,7 @@ const Users = () => {
         formData.append("enabled", selectedUser.enabled);
         // formData.append("role", selectedUser.role_id);
         formData.append("upline", selectedUser.id_upline);
-        formData.append("category_user", selectedUser.id_category);
+        formData.append("id_category", selectedUser.id_category);
         formData.append("updated_by", userId);
         formData.append("updated_at", DateNow);
 

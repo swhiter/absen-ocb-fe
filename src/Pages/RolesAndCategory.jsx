@@ -452,7 +452,7 @@ const RolesAndCategory = () => {
                 <input
                   className="form-control"
                   type="text"
-                  value={selectedRoles.name_role}
+                  value={selectedRoles?.name_role || ""}
                   onChange={(e) =>
                     setselectedRoles({
                       ...selectedRoles,
@@ -551,7 +551,7 @@ const RolesAndCategory = () => {
           <Select
             options={optionRoles}
             value={
-              selectedCategory.role_id
+              selectedCategory?.role_id
                 ? {
                     value: selectedCategory.role_id,
                     label: optionRoles.find(
@@ -575,7 +575,7 @@ const RolesAndCategory = () => {
           <input
             type="text"
             className="form-control"
-            value={selectedCategory.category_user}
+            value={selectedCategory?.category_user}
             onChange={(e) =>
               setSelectedCategory({
                 ...selectedCategory,

@@ -21,7 +21,7 @@ const MenuCategory = () => {
   const [addModalVisible, setAddModalVisible] = useState(false); // Modal untuk tambah user baru
   const [newMenuCategory, setnewMenuCategory] = useState({
     user_id: "",
-    type_off: "",
+    menu_id: "",
     tanggal: "",
     reason: "",
   });
@@ -54,42 +54,7 @@ const MenuCategory = () => {
         const fetchedMenuCategoryData = MenuCategoryResponse.data.data || [];
       
         setMenuCategory(fetchedMenuCategoryData);
-  
-        // Fetch Type Off
-        const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, { headers });
-        const groupOptions = response.data.data.map((group) => ({
-          value: group.id_category,
-          label: group.category_user,
-        }));
-        setGroups(groupOptions);
 
-        if (selectedMenuCategory.id_category) {
-          const initialGroup = groupOptions.find(
-            (group) => group.value === selectedMenuCategory.id_category
-          );
-          setSelectedGroup(initialGroup || null);
-        }
-  
-  
-        // Fetch Users
-        const menuResponse = await axios.get(`${VITE_API_URL}/menu`, { headers });
-        const menuOptions = menuResponse.data.data.map((menu) => ({
-          value: menu.id,
-          label: menu.name,
-        }));
-        setmenus(menuOptions);
-
-        
-        if (selectedMenuCategory.menu_id) {
-          const initialMenu = menuOptions.find(
-            (menu) => menu.value === selectedMenuCategory.menu_id
-          );
-          setSelectedmenus(initialMenu || null);
-        }
-  
-  
-       
-        
         setError(null);
       } catch (error) {
         setError(error.response?.data?.message || error.message);
@@ -100,7 +65,51 @@ const MenuCategory = () => {
     };
   
     fetchData();
-  }, [selectedMenuCategory.id_category, selectedMenuCategory.menu_id]);
+  }, []);
+
+  useEffect(() => {
+    const fetchSelect = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+      // Fetch Type Off
+      const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, { headers });
+      const groupOptions = response.data.data.map((group) => ({
+        value: group.id_category,
+        label: group.category_user,
+      }));
+      setGroups(groupOptions);
+
+      if (selectedMenuCategory.id_category) {
+        const initialGroup = groupOptions.find(
+          (group) => group.value === selectedMenuCategory.id_category
+        );
+        setSelectedGroup(initialGroup || null);
+      }
+
+      // Fetch Users
+      const menuResponse = await axios.get(`${VITE_API_URL}/menu`, { headers });
+      const menuOptions = menuResponse.data.data.map((menu) => ({
+        value: menu.menu_id,
+        label: menu.name,
+      }));
+      setmenus(menuOptions);
+
+
+      if (selectedMenuCategory.menu_id) {
+        const initialMenu = menuOptions.find(
+          (menu) => menu.value === selectedMenuCategory.menu_id
+        );
+        setSelectedmenus(initialMenu || null);
+      }
+
+
+    } catch (error) {
+      console.error("Failed to fetch group:", error);
+    }
+  }
+    fetchSelect();
+  },[selectedMenuCategory.id_category, selectedMenuCategory.menu_id]);
   
   // Filtered MenuCategory
   // const filteredMenuCategory = MenuCategory.filter(
@@ -156,14 +165,17 @@ const MenuCategory = () => {
 
       // Tambahkan data baru ke state dengan format yang sesuai tabel
       setMenuCategory((prev) => [
-        ...prev,
+        
+        
         {
+          ...addedMenuCategory,
           // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
           category_user:
             groups.find((r) => r.value === addedMenuCategory.id_category)?.label || "", // Nama retail
-          menu_name: menus.find((r) => r.value === addedMenuCategory.id)?.label || "",
-          ...addedMenuCategory,
+          menu_name: menus.find((r) => r.value === addedMenuCategory.menu_id)?.label || "",
+          
         },
+        ...prev,
       ]);
 
       // setMenuCategory((prev) => [...prev, response.data.data]);
@@ -257,10 +269,10 @@ const MenuCategory = () => {
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
       const responseUpdate = await axios.post(
-        `${VITE_API_URL}/menu/ipdate-config/${selectedMenuCategory.id}`,
+        `${VITE_API_URL}/menu/update-config/${selectedMenuCategory.id}`,
         {
           id_category: selectedMenuCategory.id_category,
-          id: selectedMenuCategory.menu_id,
+          menu_id: selectedMenuCategory.menu_id,
           updated_by: userId,
           updated_at: DateNow,
         },
@@ -389,7 +401,7 @@ const MenuCategory = () => {
           <div className="card">
             <div className="card-body">
               <h4 className="card-title">Table Category Menu</h4>
-              <div className="table-responsive">
+              <div className="">
                 {loading ? (
                   <p>Loading data...</p>
                 ) : error ? (
@@ -501,10 +513,10 @@ const MenuCategory = () => {
             <Select
               options={menus}
               value={
-                newMenuCategory.id
+                newMenuCategory.menu_id
                   ? {
-                      value: newMenuCategory.id,
-                      label: menus.find((r) => r.value === newMenuCategory.id)
+                      value: newMenuCategory.menu_id,
+                      label: menus.find((r) => r.value === newMenuCategory.menu_id)
                         ?.label,
                     }
                   : null
@@ -513,7 +525,7 @@ const MenuCategory = () => {
                 setSelectedmenus(option);
                 setnewMenuCategory({
                   ...newMenuCategory,
-                  id: option ? option.value : "",
+                  menu_id: option ? option.value : "",
                 });
               }}
               placeholder="Pilih Menu..."
