@@ -5,6 +5,7 @@ const VITE_API_URL = import.meta.env.VITE_API_URL;
 const VITE_API_IMAGE = import.meta.env.VITE_API_IMAGE;
 import Swal from "sweetalert2";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
 // const now = new Date();
 // const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
@@ -335,6 +336,27 @@ const Absensi = () => {
       inputRefs.current[activeInput].focus();
     }
   }, [filterText, activeInput]);
+
+    const exportToExcel = () => {
+      const data = filteredAbsensi.map((row, index) => ({
+        "No": index + 1,
+        "Nama Karyawan": row.nama_karyawan,
+        "Retail / Outlet": row.retail_name,
+        "Code Absen": row.category_absen,
+        "Waktu Absen": format(new Date(row.absen_time), "yyyy-MM-dd HH:mm:ss"),
+        "Deskripsi Absen": row.description,
+        "Fee": row.fee,
+        "Status": row.is_valid ? "Valid" : "Invalid" ,
+      }));
+  
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Absensi Data");
+  
+      const dateNow = new Date().toISOString().split("T")[0]; // Current date
+      XLSX.writeFile(workbook, `Absensi_Data_${dateNow}.xlsx`);
+    };
+  
  
 
   return (
@@ -387,7 +409,7 @@ const Absensi = () => {
                         </button>
                       </div>
 
-                      <div className="col-sm-2"></div>
+                      <div className="col-sm-4 d-flex align-items-center"></div>
                       <div className="col-sm-4 d-flex align-items-center">
                         {/* <div className="input-group me-2 w-100">
                           <div className="input-group-prepend bg-transparent">
@@ -403,6 +425,12 @@ const Absensi = () => {
                             onChange={(e) => setSearch(e.target.value)}
                           />
                         </div> */}
+                         <button
+                          className="btn btn-success btn-sm"
+                          onClick={exportToExcel}
+                        >
+                          Export to Excel
+                        </button>
                       </div>
                     </div>
 

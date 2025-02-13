@@ -552,7 +552,7 @@ const MenuCategory = () => {
 
       <Modal show={modalVisible} onHide={() => setModalVisible(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit Hari Libur</Modal.Title>
+          <Modal.Title>Edit Config Menu</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="card">

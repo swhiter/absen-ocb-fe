@@ -7,6 +7,10 @@ import Button from "react-bootstrap/Button";
 import { format } from "date-fns";
 import Select from "react-select";
 import { Tooltip } from "react-tooltip";
+import DatePicker from "react-multi-date-picker";
+// import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import * as XLSX from "xlsx";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
@@ -14,6 +18,7 @@ const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
 const OffDay = () => {
   const [offDay, setoffDay] = useState([]);
+  const [dates, setDates] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedoffDay, setSelectedoffDay] = useState({});
@@ -22,11 +27,10 @@ const OffDay = () => {
   const [newoffDay, setnewoffDay] = useState({
     user_id: "",
     type_off: "",
-    tanggal: "",
+    tanggal: [],
     reason: "",
     employes_id: "",
     name: "",
-    
   });
   const [typeOff, settypeOff] = useState([]);
   const [selectedTypeOff, setSelectedTypeOff] = useState(null);
@@ -41,6 +45,11 @@ const OffDay = () => {
   });
   const inputRefs = useRef({});
   const [activeInput, setActiveInput] = useState(null);
+  const [selectedDates, setSelectedDates] = useState([]);
+
+  const handleDateChange = (date) => {
+    setSelectedDates([...selectedDates, date]);
+  };
 
   const formatOffDayData = (data) => {
     if (!Array.isArray(data)) {
@@ -55,8 +64,8 @@ const OffDay = () => {
       return {
         id: item.id_offday,
         tanggal: item.tanggal || "",
-        type_off: item.type_off || "Unknown",
-        reason: item.reason || "Unknown",
+        type_off: item.type_off || "-",
+        reason: item.reason || "-",
         id_type_off: item.id_type_off,
         name: item.detail_user
           ? item.detail_user.map((group) => `${group.name}`).join(", ")
@@ -167,6 +176,7 @@ const OffDay = () => {
   console.log("Selected offDay:", selectedoffDay);
   console.log("typeOff:", typeOff);
   console.log("Selected typeOff:", selectedTypeOff);
+  console.log("newOffDay", newoffDay);
 
   const handleAddoffDay = async () => {
     try {
@@ -196,34 +206,33 @@ const OffDay = () => {
         { headers }
       );
       // Ambil data baru dari respons API
-      const addedOffday = response.data.data;
+      const addedOffday = response.data.data; // Ambil data dari response
 
-      // Tambahkan data baru ke state dengan format yang sesuai tabel
-      setoffDay((prev) => [
-        {
-          ...addedOffday,
-          // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
-          type_off:
-            typeOff.find((r) => r.value === addedOffday.type_off)?.label || "", // Nama retail
-          name:
-            Array.isArray(selecteduser) && selecteduser.length > 0
+      // Loop untuk memastikan setiap tanggal masuk sebagai baris terpisah
+      const newRows = addedOffday.tanggal.map((tgl, index) => ({
+          id: addedOffday.id_offdays[index], // Ambil ID yang sesuai
+          tanggal: tgl,
+          type_off: typeOff.find((r) => r.value === addedOffday.type_off)?.label || "",
+          reason: addedOffday.reason,
+          name: selecteduser?.length
               ? selecteduser.map((g) => g.label).join(", ")
               : "Semua Karyawan",
           id_type_off: addedOffday.type_off || "",
-          employes_id:
-            Array.isArray(selecteduser) && selecteduser.length > 0
-              ? selecteduser.map((g) => g.value).join(", ") // Ambil ID karyawan
+          employes_id: selecteduser?.length
+              ? selecteduser.map((g) => g.value).join(", ")
               : "",
-        },
-        ...prev,
-      ]);
+      }));
+      
+      // Tambahkan ke state tabel
+      setoffDay((prev) => [...newRows, ...prev]);
+      
 
       // setoffDay((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
       setnewoffDay({
         user_id: "",
-        tanggal: "",
+        tanggal: [],
         type_off: "",
         reason: "",
         employes_id: "",
@@ -456,7 +465,7 @@ const OffDay = () => {
           />
         </div>
       ),
-      selector: (row) => format(new Date(row.tanggal), "yyyy-MM-dd"),
+      selector: (row) => row.tanggal,
       // selector: (row) => row.tanggal,
     },
     {
@@ -531,6 +540,23 @@ const OffDay = () => {
     }
   }, [filterText, activeInput]);
 
+  const exportToExcel = () => {
+        const data = filteredoffDay.map((row, index) => ({
+          "No": index + 1,
+          "Nama Karyawan": row.name,
+          "Tanggal": row.tanggal,
+          "Type Off/Libur": row.type_off,
+          "Keterangan": row.reason,
+        }));
+    
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Data Hari Libur Karyawan");
+    
+        const dateNow = new Date().toISOString().split("T")[0]; // Current date
+        XLSX.writeFile(workbook, `OffDay_Data_${dateNow}.xlsx`);
+      };
+
   return (
     <div className="content-wrapper">
       <div className="page-header">
@@ -558,9 +584,17 @@ const OffDay = () => {
                           Tambah Hari Libur
                         </button>
                       </div>
-                      <div className="col-sm-4">
+                      <div className="col-sm-2"></div>
+                      <div className="col-sm-2">
                         <div className="input-group">
-                          <div className="input-group-prepend bg-transparent"></div>
+                          <div className="input-group-prepend bg-transparent">
+                          <button
+                          className="btn btn-success btn-sm"
+                          onClick={exportToExcel}
+                        >
+                          Export to Excel
+                        </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -631,14 +665,40 @@ const OffDay = () => {
         <Modal.Body>
           <div className="form-group">
             <label>Tanggal</label>
-            <input
+            {/* <input
               type="date"
               className="form-control"
               value={newoffDay.tanggal}
               onChange={(e) =>
                 setnewoffDay({ ...newoffDay, tanggal: e.target.value })
               }
+            /> */}
+            <DatePicker
+              className="w-100"
+              inputClass="form-control"
+              multiple
+              value={newoffDay.tanggal}
+              onChange={(dates) =>
+                setnewoffDay({
+                  ...newoffDay,
+                  tanggal: dates.map((date) => date.format("YYYY-MM-DD")), // Convert ke format tanggal
+                })
+              }
+              containerStyle={{ width: "100%" }}
             />
+
+            {/* <p>Tanggal yang dipilih: {dates.join(", ")}</p> */}
+            {/* <DatePicker
+        selected={null}
+        onChange={handleDateChange}
+        dateFormat="yyyy-MM-dd"
+        placeholderText="Pilih tanggal"
+      />
+      <ul>
+        {selectedDates.map((date, index) => (
+          <li key={index}>{date.toLocaleDateString()}</li>
+        ))}
+      </ul> */}
           </div>
           <div className="form-group">
             <label>

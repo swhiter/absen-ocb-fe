@@ -7,6 +7,10 @@ import Button from "react-bootstrap/Button";
 import { format } from "date-fns";
 import Select from "react-select";
 import { Tooltip } from "react-tooltip";
+import DatePicker from "react-multi-date-picker";
+// import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import * as XLSX from "xlsx";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
@@ -23,7 +27,10 @@ const Bonus = () => {
   const [newbonus, setnewbonus] = useState({
     user_id: "",
     bonus: "",
-    month: "",
+    month: [],
+    reason : "",
+    type_pb: "",
+    name: "",
   });
   const [users, setusers] = useState([]);
   const [selecteduser, setSelecteduser] = useState(null);
@@ -212,26 +219,41 @@ const Bonus = () => {
       // Ambil data baru dari respons API
       const addedbonus = response.data.data;
 
+      const newRows = addedbonus.month.map((tgl, index) => ({
+        id: addedbonus.id_bonuss[index], // Ambil ID yang sesuai
+        month: tgl,
+        bonus : addedbonus.bonus,
+        type_pb: typePB.find((r) => r.value === addedbonus.type_pb)?.label || "",
+        reason: addedbonus.reason,
+        name: selecteduser?.length
+            ? selecteduser.map((g) => g.label).join(", ")
+            : "Semua Karyawan",
+        id_type_pb: addedbonus.type_pb || "",
+        employes_id: selecteduser?.length
+            ? selecteduser.map((g) => g.value).join(", ")
+            : "",
+    }));
       // Tambahkan data baru ke state dengan format yang sesuai tabel
-      setbonus((prev) => [
+      setbonus((prev) => [...newRows, ...prev]);
+      // setbonus((prev) => [
         
-        {
-          ...addedbonus,
-          // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
-          type_pb:
-          typePB.find((r) => r.value === addedbonus.type_pb)?.label || "",
-          name: Array.isArray(selecteduser) && selecteduser.length > 0
-          ? selecteduser.map((g) => g.label).join(", ") 
-          : "Semua Karyawan",
+      //   {
+      //     ...addedbonus,
+      //     // name: users.find((u) => u.value === addedAbsen.user_id)?.label || "", // Nama user
+      //     type_pb:
+      //     typePB.find((r) => r.value === addedbonus.type_pb)?.label || "",
+      //     name: Array.isArray(selecteduser) && selecteduser.length > 0
+      //     ? selecteduser.map((g) => g.label).join(", ") 
+      //     : "Semua Karyawan",
 
-        },
-        ...prev,
-      ]);
+      //   },
+      //   ...prev,
+      // ]);
 
       // setbonus((prev) => [...prev, response.data.data]);
       Swal.fire("Success!", `${response.data.message}`, "success");
       setAddModalVisible(false);
-      setnewbonus({ user_id: "", bonus: "", month: "", type_pb: ""});
+      setnewbonus({ user_id: "", bonus: "", month: [], type_pb: "", name:"", employes_id: "",});
       setSelecteduser(null);
     } catch (error) {
       Swal.fire(
@@ -506,6 +528,23 @@ const Bonus = () => {
     }
   }, [filterText, activeInput]);
  
+   const exportToExcel = () => {
+        const data = filteredbonus.map((row, index) => ({
+          "No": index + 1,
+          "Nama Karyawan": row.name,
+          "Tanggal": row.month,
+          "Type Bonus / Punishment": row.type_pb,
+          "Jumlah": row.bonus,
+          "Keterangan": row.reason,
+        }));
+    
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Bonus-Punishment Data");
+    
+        const dateNow = new Date().toISOString().split("T")[0]; // Current date
+        XLSX.writeFile(workbook, `Data_Bonus-Punishment_${dateNow}.xlsx`);
+      };
 
 
   return (
@@ -535,11 +574,17 @@ const Bonus = () => {
                           Tambah Bonus/Punishment
                         </button>
                       </div>
-                      <div className="col-sm-4 d-flex align-items-center">
+                      <div className="col-sm-2"></div>
+                      <div className="col-sm-2 d-flex align-items-center">
                       <div className="input-group me-2 w-100">
                           <div className="input-group-prepend bg-transparent">
                             <span className="input-group-text border-0 bg-transparent">
-                             
+                            <button
+                          className="btn btn-success btn-sm"
+                          onClick={exportToExcel}
+                        >
+                          Export to Excel
+                        </button>
                             </span>
                           </div>
                           
@@ -602,13 +647,26 @@ const Bonus = () => {
         <Modal.Body>
         <div className="form-group">
             <label>Tanggal</label>
-            <input
+            {/* <input
               type="date"
               className="form-control"
               value={newbonus.month}
               onChange={(e) =>
                 setnewbonus({ ...newbonus, month: e.target.value })
               }
+            /> */}
+             <DatePicker
+              className="w-100"
+              inputClass="form-control"
+              multiple
+              value={newbonus.month}
+              onChange={(dates) =>
+                setnewbonus({
+                  ...newbonus,
+                  month: dates.map((date) => date.format("YYYY-MM-DD")), // Convert ke format tanggal
+                })
+              }
+              containerStyle={{ width: "100%" }}
             />
           </div>
           <div className="form-group">
