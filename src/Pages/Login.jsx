@@ -46,7 +46,7 @@ const Login = () => {
       const userID = decoded.id;
       // console.log(userID)
       const profileResponse = await axios.post(
-        `${VITE_API_URL}/users/profile/${userID}`,
+        `${VITE_API_URL}/users/profile-web/${userID}`,
         {}, 
         {
           headers: {

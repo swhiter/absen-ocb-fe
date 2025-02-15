@@ -78,7 +78,7 @@ const Header = ({toggleSidebar}) => {
                   <span className="availability-status online"></span>
                 </div>
                 <div className="nav-profile-text">
-                  <p className="mb-1 text-black">{name.name || "Nama User Dashboard"}</p>
+                  <p className="mb-1 text-black">{name?.name || "Nama User Dashboard"}</p>
                 </div>
               </a>
               <div className="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">

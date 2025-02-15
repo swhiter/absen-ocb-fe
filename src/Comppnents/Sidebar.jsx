@@ -25,9 +25,9 @@ const Sidebar = ({ isSidebarOpen }) => {
 
   useEffect(() => {
     const fetchMenuData = async () => {
-      if (name.id_category) {
+      if (name?.id_category) {
         try {
-          const response = await axios.get(`${VITE_API_URL}/menu/category/${name.id_category}`,{headers});
+          const response = await axios.get(`${VITE_API_URL}/menu/category/${name?.id_category}`,{headers});
           if (response.data && response.data.data) {
             const structuredMenu = buildMenuStructure(response.data.data);
             setNavigationLinks(structuredMenu);
@@ -41,7 +41,7 @@ const Sidebar = ({ isSidebarOpen }) => {
     };
 
     fetchMenuData();
-  }, [name.id_category]);
+  }, [name?.id_category]);
 
   const buildMenuStructure = (menuItems) => {
     const menuMap = {};
@@ -69,14 +69,14 @@ const Sidebar = ({ isSidebarOpen }) => {
           <a className="nav-link">
             <div className="nav-profile-image">
               <img
-                src={name.photo_url ? `${VITE_API_IMAGE}${name.photo_url}` : "/user-icon.jpg"}
+                src={name?.photo_url ? `${VITE_API_IMAGE}${name?.photo_url}` : "/user-icon.jpg"}
                 alt="profile"
               />
               <span className="login-status online"></span>
             </div>
             <div className="nav-profile-text d-flex flex-column">
-              <span className="font-weight-bold mb-1 text-small">{name.name || "Nama Dashboard"}</span>
-              <span className="text-secondary text-small">{name.category_user}</span>
+              <span className="font-weight-bold mb-1 text-small">{name?.name || "Nama Dashboard"}</span>
+              <span className="text-secondary text-small">{name?.category_user}</span>
             </div>
           </a>
         </li>
