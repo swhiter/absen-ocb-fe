@@ -38,7 +38,7 @@ const Profile = () => {
 
       try {
         const profileResponse = await axios.post(
-          `${VITE_API_URL}/users/profile/${userId}`,
+          `${VITE_API_URL}/users/profile-web/${userId}`,
           {},
           {
             headers: {
