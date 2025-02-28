@@ -670,7 +670,6 @@ const Bonus = () => {
             />
           </div>
           <div className="form-group">
-            <label>Karyawan</label>
             <label> Karyawan  (
                 <span className="text-secondary text-small">
                   Kosongkan karyawan jika tujuan nya untuk Semua Karyawan

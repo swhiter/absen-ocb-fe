@@ -509,7 +509,7 @@ const MenuCategory = () => {
 
          
           <div className="form-group">
-            <label>Kategori Libur</label>
+            <label>Menu</label>
             <Select
               options={menus}
               value={
