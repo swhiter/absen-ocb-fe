@@ -12,6 +12,12 @@ const VITE_API_URL = import.meta.env.VITE_API_URL;
 const now = new Date();
 const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
+const KatTime = [
+  { value: "pagi", label: "Pagi" },
+  { value: "sore", label: "Sore" },
+  { value: "malam", label: "Malam" },
+];
+
 const CatAbsen = () => {
   const [catabsen, setcatabsen] = useState([]);
   const [error, setError] = useState(null);
@@ -28,6 +34,7 @@ const CatAbsen = () => {
     retail_id: "",
     start_time: "",
     end_time: "",
+    kategori_absen: "",
   });
 
   const [groups, setGroups] = useState([]);
@@ -38,9 +45,11 @@ const CatAbsen = () => {
     fee: "",
     group_absen: "",
     retail_name: "",
+    kategori_absen: "",
   });
   const inputRefs = useRef({});
   const [activeInput, setActiveInput] = useState(null);
+  const [selectedKatTime, setSelectedKatTime] = useState(null);
 
   const formatAbsenData = (data) => {
     if (!Array.isArray(data)) {
@@ -51,7 +60,7 @@ const CatAbsen = () => {
       }
     }
 
-    return data.map((item,) => {
+    return data.map((item) => {
       return {
         id: item.absen_id,
         name: item.name || "Unknown",
@@ -59,6 +68,7 @@ const CatAbsen = () => {
         fee: item.fee || 0,
         start_time: item.start_time || "-",
         end_time: item.end_time || "-",
+        kategori_absen: item.kategori_absen || "-",
         category_user: item.groups
           ? item.groups.map((group) => `${group.category_user}`).join(", ")
           : "-",
@@ -81,6 +91,7 @@ const CatAbsen = () => {
         });
 
         const formattedData = formatAbsenData(response.data.data);
+        console.log(formattedData);
 
         setcatabsen(formattedData);
         setError(null);
@@ -95,8 +106,6 @@ const CatAbsen = () => {
     fetchcatabsen();
   }, []);
 
-
-
   const filteredCatabsen = catabsen.filter((item) =>
     Object.keys(filterText).every((key) => {
       const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
@@ -107,47 +116,52 @@ const CatAbsen = () => {
     })
   );
 
-
   useEffect(() => {
     const fetchGroup = async () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-  
-        const response = await axios.get(`${VITE_API_URL}/users/category-alluser`, {
-          headers,
-        });
-  
+
+        const response = await axios.get(
+          `${VITE_API_URL}/users/category-alluser`,
+          {
+            headers,
+          }
+        );
+
         const groupOptions = response.data.data.map((group) => ({
           value: group.id_category,
           label: group.category_user,
         }));
-  
+
         setGroups(groupOptions);
-  
+
         // Update selected group jika ada group_absen di selectedCatabsen
         if (selectedCatabsen?.group_absen) {
           const groupIds = selectedCatabsen.group_absen
             .split(", ")
             .map((id_category) => Number(id_category.trim())); // Konversi ke number
-          
-        
+
           const initialGroups = groupOptions.filter((group) =>
             groupIds.includes(group.value)
           );
-          
-        
+
           setSelectedGroup(initialGroups);
+        }
+
+        if (selectedCatabsen?.kategori_absen) {
+          const initialKatTime = KatTime.find(
+            (katTime) => katTime.value === selectedCatabsen.kategori_absen
+          );
+          setSelectedKatTime(initialKatTime|| null);
         }
       } catch (error) {
         console.error("Failed to fetch group:", error);
       }
     };
-  
+
     fetchGroup();
-  }, [selectedCatabsen?.group_absen]);
-
-
+  }, [selectedCatabsen?.group_absen, selectedCatabsen?.kategori_absen]);
 
   const handleAddCatAbsen = async () => {
     try {
@@ -169,6 +183,7 @@ const CatAbsen = () => {
         ...newCatabsen,
         created_by: userId,
         created_at: DateNow,
+        kategori_absen: selectedKatTime?.value || null,
         group_details,
       };
 
@@ -186,10 +201,12 @@ const CatAbsen = () => {
       setcatabsen((prev) => [
         {
           ...addedAbsen,
-          category_user: Array.isArray(selectedGroup) 
-            ? selectedGroup.map((g) => g.label).join(", ") 
+          category_user: Array.isArray(selectedGroup)
+            ? selectedGroup.map((g) => g.label).join(", ")
             : "Semua Group", // Set default jika selectedGroup null atau bukan array
+          kategori_absen: selectedKatTime?.label || "-", // Menampilkan shift di tabel
         },
+
         ...prev,
       ]);
 
@@ -204,6 +221,7 @@ const CatAbsen = () => {
         group_absen: "",
       });
       setSelectedGroup([]);
+      setSelectedKatTime(null);
     } catch (error) {
       Swal.fire(
         "Error!",
@@ -212,7 +230,6 @@ const CatAbsen = () => {
       );
     }
   };
-
 
   const handleUpdate = (row) => {
     setSelectedCatabsen(row);
@@ -253,9 +270,7 @@ const CatAbsen = () => {
             { headers }
           );
           Swal.fire("Deleted!", `${responseDelete.data.message}`, "success");
-          setcatabsen((prev) =>
-            prev.filter((item) => item.id !== row.id)
-          );
+          setcatabsen((prev) => prev.filter((item) => item.id !== row.id));
         } catch (error) {
           Swal.fire(
             "Error!",
@@ -278,7 +293,7 @@ const CatAbsen = () => {
       const userProfile = sessionStorage.getItem("userProfile");
       const userData = JSON.parse(userProfile); // Parse JSON
       const userId = userData[0]?.user_id;
-  
+
       // Siapkan group_details untuk dikirim ke backend
       let group_details = [];
       if (selectedGroup?.length > 0) {
@@ -286,7 +301,7 @@ const CatAbsen = () => {
           id_category: group.value,
         }));
       }
-  
+
       // Payload untuk request update
       const payload = {
         name: selectedCatabsen.name,
@@ -295,35 +310,36 @@ const CatAbsen = () => {
         retail_id: selectedCatabsen.retail_id,
         start_time: selectedCatabsen.start_time,
         end_time: selectedCatabsen.end_time,
+        kategori_absen: selectedKatTime?.value || null,
         group_details,
         updated_by: userId,
         updated_at: DateNow,
       };
-  
+
       const responseUpdate = await axios.post(
         `${VITE_API_URL}/absen-management/update/${selectedCatabsen.id}`,
         payload,
         { headers }
       );
 
-  
       // Perbarui state catabsen dengan data yang diperbarui
       setcatabsen((prevAbsen) =>
         prevAbsen.map((item) =>
           item.id === selectedCatabsen.id
             ? {
                 ...selectedCatabsen,
-                category_user: Array.isArray(selectedGroup) && selectedGroup.length > 0
-                ? selectedGroup.map((g) => g.label).join(", ")
-                : "Semua Group",
+                kategori_absen: selectedKatTime?.label || "-",
+                category_user:
+                  Array.isArray(selectedGroup) && selectedGroup.length > 0
+                    ? selectedGroup.map((g) => g.label).join(", ")
+                    : "Semua Group",
               }
             : item
         )
       );
-  
+
       Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
       setModalVisible(false);
-      
     } catch (error) {
       Swal.fire(
         "Error!",
@@ -332,7 +348,6 @@ const CatAbsen = () => {
       );
     }
   };
-  
 
   const columns = [
     {
@@ -445,6 +460,30 @@ const CatAbsen = () => {
         </div>
       ),
       selector: (row) => row.end_time,
+    },
+    {
+      name: (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
+          <span style={{ marginBottom: "6px" }}>Kategori Waktu</span>
+          <input
+            type="text"
+            value={filterText.kategori_absen}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.kategori_absen = el)}
+            onChange={(e) =>
+              handleInputChange("kategori_absen", e.target.value)
+            }
+            onFocus={() => setActiveInput("kategori_absen")} // Set active input
+          />
+        </div>
+      ),
+      selector: (row) => row.kategori_absen,
     },
     {
       name: (
@@ -678,32 +717,6 @@ const CatAbsen = () => {
             </div>
           </div>
 
-          {/* <div className="form-group">
-            <label>Nama Retail</label>
-            <Select
-              options={retails}
-              isMulti
-              value={
-                newCatabsen.retail_id
-                  ? {
-                      value: newCatabsen.retail_id,
-                      label: retails.find(
-                        (r) => r.value === newCatabsen.retail_id
-                      )?.label,
-                    }
-                  : null
-              }
-              onChange={(option) => {
-                setSelectedRetail(option);
-                setnewCatabsen({
-                  ...newCatabsen,
-                  retail_id: option ? option.value : "",
-                });
-              }}
-              placeholder="Pilih Retail..."
-              isClearable
-            />
-          </div> */}
           <div className="form-group row">
             <div className="col-4">
               <label>fee</label>
@@ -717,23 +730,33 @@ const CatAbsen = () => {
               />
             </div>
             <div className="col-8">
-              <label>
-                Group Absen (
-                <span className="text-secondary text-small">
-                  Kosongkan group Absen jika tujuan nya untuk Semua Group
-                </span>
-                )
-              </label>
-
+              <label>Kategori Time</label>
               <Select
-                options={groups}
-                isMulti
-                value={selectedGroup}
-                onChange={handleChange}
-                placeholder="Pilih Group Absen..."
+                options={KatTime}
+                value={selectedKatTime}
+                onChange={(option) => setSelectedKatTime(option)}
+                placeholder="Pilih Kategori Time..."
                 isClearable
               />
             </div>
+          </div>
+          <div className="form-group row">
+            <label>
+              Group Absen (
+              <span className="text-secondary text-small">
+                Kosongkan group Absen jika tujuan nya untuk Semua Group
+              </span>
+              )
+            </label>
+
+            <Select
+              options={groups}
+              isMulti
+              value={selectedGroup}
+              onChange={handleChange}
+              placeholder="Pilih Group Absen..."
+              isClearable
+            />
           </div>
         </Modal.Body>
         <Modal.Footer>
@@ -829,24 +852,34 @@ const CatAbsen = () => {
                   }
                 />
               </div>
-             
 
               <div className="form-group">
-              <label>
-          Group Absen (
-          <span className="text-secondary text-small">
-            Kosongkan group Absen jika tujuan nya untuk Semua Group
-          </span>
-          )
-        </label>
-        <Select
-          options={groups}
-          isMulti
-          value={selectedGroup}
-          onChange={(selected) => setSelectedGroup(selected)}
-          placeholder="Pilih Group Absen..."
-          isClearable
-        />
+                <label>Kategori Time</label>
+                <Select
+                  options={KatTime}
+                  value={selectedKatTime}
+                  onChange={(selected) => setSelectedKatTime(selected)}
+                  placeholder="Pilih Kategori Time..."
+                  isClearable
+                />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  Group Absen (
+                  <span className="text-secondary text-small">
+                    Kosongkan group Absen jika tujuan nya untuk Semua Group
+                  </span>
+                  )
+                </label>
+                <Select
+                  options={groups}
+                  isMulti
+                  value={selectedGroup}
+                  onChange={(selected) => setSelectedGroup(selected)}
+                  placeholder="Pilih Group Absen..."
+                  isClearable
+                />
               </div>
               {/*           
           <div className="form-group">
