@@ -6,6 +6,7 @@ const VITE_API_IMAGE = import.meta.env.VITE_API_IMAGE;
 import Swal from "sweetalert2";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
+import { Tooltip } from "react-tooltip";
 // const now = new Date();
 // const DateNow = format(now, "yyyy-MM-dd HH:mm:ss");
 
@@ -24,7 +25,8 @@ const Absensi = () => {
     category_absen: "",
     description: "",
     absen_time: "",
-    fee: ""
+    fee: "",
+    reason:""
   
 
   });
@@ -219,6 +221,7 @@ const Absensi = () => {
       ),
       selector: (row) =>
         format(new Date(row.absen_time), "yyyy-MM-dd HH:mm:ss"),
+      wrap: true,
     },
     { 
       name: (
@@ -253,9 +256,52 @@ const Absensi = () => {
         </div>
       ),
       selector: (row) => row.fee },
+
+      { name: (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ marginBottom: "6px" }}>Catatan Karyawan</span>
+          <input
+            type="text"
+            value={filterText.reason}
+            className="form-control mt-1 filter-header"
+            ref={(el) => (inputRefs.current.reason = el)}
+            onChange={(e) => handleInputChange("reason", e.target.value)}
+            onFocus={() => setActiveInput('reason')} // Set active input
+          />
+        </div>
+      ), 
+      cell: (row) => {
+        // Format teks tooltip: setiap 2 kata setelah koma, masuk ke baris baru
+        const formattedText = row.reason;
+  
+        return (
+          <div>
+            <span data-tooltip-id={`tooltip-${row.reason}`}>
+              {row.reason.length > 30
+                ? row.reason.substring(0, 25) + "..."
+                : row.reason}
+            </span>
+            <Tooltip
+              id={`tooltip-${row.reason}`}
+              place="top"
+              effect="solid"
+              style={{
+                backgroundColor: "#FAD9CF", // Ubah background tooltip ke orange
+                color: "black", // Warna teks agar kontras
+                borderRadius: "8px",
+                padding: "8px",
+                whiteSpace: "pre-line",
+                zIndex: 9999,
+              }} // Tambahkan white-space agar newline terbaca
+            >
+              {formattedText}
+            </Tooltip>
+          </div>
+        );
+      },selector: (row) => row.reason },
     {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start",  }}>
           <span style={{ marginBottom: "6px" }}>Photo/Video</span>
           <input
             type="text"
@@ -265,7 +311,7 @@ const Absensi = () => {
         </div>
       ),
       cell: (row) => (
-        <div>
+        <div >
           {row?.photo_url &&
           (row.photo_url.endsWith(".mp4") ||
             row.photo_url.endsWith(".webm")) ? (
