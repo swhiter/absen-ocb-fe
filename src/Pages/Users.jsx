@@ -25,7 +25,7 @@ const Users = () => {
     name: "",
     username: "",
     role: "",
-    imei:"",
+    imei: "",
     category_user: "",
     upline: "",
     enabled: 1,
@@ -43,15 +43,12 @@ const Users = () => {
     name: "",
     username: "",
     role: "",
-    imei:"",
+    imei: "",
     category_user: "",
     upline: "",
-  
-
   });
   const inputRefs = useRef({});
   const [activeInput, setActiveInput] = useState(null);
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,7 +116,6 @@ const Users = () => {
           setSelectedCategory(initialTypeOff || null);
         }
 
-        
         // Fetch Users
         const uplineResponse = await axios.get(`${VITE_API_URL}/users`, {
           headers,
@@ -136,11 +132,10 @@ const Users = () => {
           );
           setSelectedUpline(initialUser || null);
         }
-
       } catch (error) {
         console.error("Failed to fetch group:", error);
       }
-    }
+    };
     fetchSelect();
   }, [selectedUser.role_id, selectedUser.id_upline, selectedUser.id_category]);
 
@@ -158,7 +153,7 @@ const Users = () => {
     Object.keys(filterText).every((key) => {
       const itemValue = String(item[key])?.toLowerCase(); // Pastikan item selalu jadi string kecil
       const filterValue = filterText[key].toLowerCase(); // Pastikan filter input menjadi huruf kecil
-  
+
       // Pastikan bahwa itemValue mengandung filterValue
       return itemValue.includes(filterValue);
     })
@@ -170,8 +165,6 @@ const Users = () => {
       [field]: value,
     }));
   };
-  
-
 
   // const filteredUser = Users.filter((item) =>
   //   item.name?.toLowerCase().includes(search.toLowerCase())
@@ -199,7 +192,7 @@ const Users = () => {
     setSelectedCategory(selectedOption);
     setSelectedUser({
       ...selectedUser,
-      id_category: selectedOption ? selectedOption.value : null, 
+      id_category: selectedOption ? selectedOption.value : null,
     });
   };
 
@@ -217,7 +210,7 @@ const Users = () => {
     setSelectedUser(row);
     setModalVisible(true);
   };
-  
+
   const handleAddUser = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -256,7 +249,7 @@ const Users = () => {
         }
 
         formData.append("photo_url", file);
-      }else{
+      } else {
         formData.append("photo_url", null);
       }
 
@@ -374,8 +367,6 @@ const Users = () => {
 
   // };
 
-
-
   const handleDelete = async (row) => {
     Swal.fire({
       title: "Are you sure?",
@@ -461,136 +452,138 @@ const Users = () => {
   // };
 
   // console.log(selectedUser.photo_url)
-    const handleSaveUpdate = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const userProfile = sessionStorage.getItem("userProfile");
-        const userData = JSON.parse(userProfile); // Parse JSON
-        const userId = userData[0]?.user_id;
+  const handleSaveUpdate = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+      const userProfile = sessionStorage.getItem("userProfile");
+      const userData = JSON.parse(userProfile); // Parse JSON
+      const userId = userData[0]?.user_id;
 
-        const formData = new FormData();
-        formData.append("name", selectedUser.name);
-        formData.append("username", selectedUser.username);
-        formData.append("imei", selectedUser.imei);
-        formData.append("enabled", selectedUser.enabled);
-        // formData.append("role", selectedUser.role_id);
-        formData.append("upline", selectedUser.id_upline);
-        formData.append("id_category", selectedUser.id_category);
-        formData.append("updated_by", userId);
-        formData.append("updated_at", DateNow);
+      const formData = new FormData();
+      formData.append("name", selectedUser.name);
+      formData.append("username", selectedUser.username);
+      formData.append("imei", selectedUser.imei);
+      formData.append("enabled", selectedUser.enabled);
+      // formData.append("role", selectedUser.role_id);
+      formData.append("upline", selectedUser.id_upline);
+      formData.append("id_category", selectedUser.id_category);
+      formData.append("updated_by", userId);
+      formData.append("updated_at", DateNow);
 
-        if (selectedUser.photo_url instanceof File) {
-          const file = selectedUser.photo_url;
+      if (selectedUser.photo_url instanceof File) {
+        const file = selectedUser.photo_url;
 
-          // Validasi ukuran dan tipe file
-          if (file.size > 5 * 1024 * 1024) {
-            Swal.fire("Error", "File size exceeds 5MB!", "error");
-            return;
-          }
-
-          const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-          if (!allowedTypes.includes(file.type)) {
-            Swal.fire(
-              "Error",
-              "Invalid file type. Please upload an image.",
-              "error"
-            );
-            return;
-          }
-
-          formData.append("photo_url", file);
+        // Validasi ukuran dan tipe file
+        if (file.size > 5 * 1024 * 1024) {
+          Swal.fire("Error", "File size exceeds 5MB!", "error");
+          return;
         }
-        else {
-          formData.append("photo_url", selectedUser.photo_url);
+
+        const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+        if (!allowedTypes.includes(file.type)) {
+          Swal.fire(
+            "Error",
+            "Invalid file type. Please upload an image.",
+            "error"
+          );
+          return;
         }
-  //       console.log("Form Data Content:");
-  // for (let [key, value] of formData.entries()) {
-  //   console.log(`${key}:`, value);
-  // }
 
-        const responseUpdate = await axios.post(
-          `${VITE_API_URL}/users/update/${selectedUser.user_id}`,
-          formData,
-          {
-            headers: {
-              ...headers,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-          
-        console.log( "ini hasil photo url")
-       console.log(responseUpdate.data.data.photo_url)
-        // const addedUsers = response.data.data;
-        // console.log( addedUsers)
-        
-        setUsers((prevUsers) =>
-          prevUsers.map((item) =>
-            item.user_id === selectedUser.user_id
-              ? {
-                  ...selectedUser,
-                  category_user:
-                    category.find(
-                      (category) =>
-                        category.value ===
-                        (isNaN(selectedUser.id_category)
-                          ? null
-                          : parseInt(selectedUser.id_category))
-                    )?.label || null,
-                  role:
-                    roles.find(
-                      (r) =>
-                        r.value ===
-                        (isNaN(selectedUser.role_id)
-                          ? null
-                          : parseInt(selectedUser.role_id))
-                    )?.label || "",
-                  upline:
-                    uplines.find(
-                      (r) =>
-                        r.value ===
-                        (isNaN(selectedUser.id_upline)
-                          ? null
-                          : parseInt(selectedUser.id_upline))
-                    )?.label || "",
-                    photo_url: responseUpdate.data.data.photo_url || null,
-                    
-                }
-              : item
-          )
-        );
-        console.log("ini euy");
-        console.log(selectedUser.photo_url);
-
-        // setUsers(responseUpdate.data.data);
-        Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
-        // setUsers((prev) =>
-        //   prev.map((item) =>
-        //     item.user_id === selectedUser.user_id ? selectedUser : item
-        //   )
-        // );
-        setModalVisible(false);
-      } catch (error) {
-        Swal.fire(
-          "Error!",
-          error.response?.data?.message || error.message,
-          "error"
-        );
+        formData.append("photo_url", file);
+      } else {
+        formData.append("photo_url", selectedUser.photo_url);
       }
-    };
+      //       console.log("Form Data Content:");
+      // for (let [key, value] of formData.entries()) {
+      //   console.log(`${key}:`, value);
+      // }
+
+      const responseUpdate = await axios.post(
+        `${VITE_API_URL}/users/update/${selectedUser.user_id}`,
+        formData,
+        {
+          headers: {
+            ...headers,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("ini hasil photo url");
+      console.log(responseUpdate.data.data.photo_url);
+      // const addedUsers = response.data.data;
+      // console.log( addedUsers)
+
+      setUsers((prevUsers) =>
+        prevUsers.map((item) =>
+          item.user_id === selectedUser.user_id
+            ? {
+                ...selectedUser,
+                category_user:
+                  category.find(
+                    (category) =>
+                      category.value ===
+                      (isNaN(selectedUser.id_category)
+                        ? null
+                        : parseInt(selectedUser.id_category))
+                  )?.label || null,
+                role:
+                  roles.find(
+                    (r) =>
+                      r.value ===
+                      (isNaN(selectedUser.role_id)
+                        ? null
+                        : parseInt(selectedUser.role_id))
+                  )?.label || "",
+                upline:
+                  uplines.find(
+                    (r) =>
+                      r.value ===
+                      (isNaN(selectedUser.id_upline)
+                        ? null
+                        : parseInt(selectedUser.id_upline))
+                  )?.label || "",
+                photo_url: responseUpdate.data.data.photo_url || null,
+              }
+            : item
+        )
+      );
+      console.log("ini euy");
+      console.log(selectedUser.photo_url);
+
+      // setUsers(responseUpdate.data.data);
+      Swal.fire("Updated!", `${responseUpdate.data.message}`, "success");
+      // setUsers((prev) =>
+      //   prev.map((item) =>
+      //     item.user_id === selectedUser.user_id ? selectedUser : item
+      //   )
+      // );
+      setModalVisible(false);
+    } catch (error) {
+      Swal.fire(
+        "Error!",
+        error.response?.data?.message || error.message,
+        "error"
+      );
+    }
+  };
 
   const columns = [
     {
-      name: (
-        <span style={{ marginBottom: "45px" }}>#</span>
-      ),
+      name: <span style={{ marginBottom: "45px" }}>#</span>,
       cell: (row, index) => <span>{index + 1}</span>,
       width: "50px",
     },
-    { 
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Nama Karyawan</span>
           <input
             type="text"
@@ -598,16 +591,24 @@ const Users = () => {
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.name = el)}
             onChange={(e) => handleInputChange("name", e.target.value)}
-            onFocus={() => setActiveInput('name')} // Set active input
+            onFocus={() => setActiveInput("name")} // Set active input
           />
         </div>
       ),
-      selector: (row) => row.name
-     },
+      selector: (row) => row.name,
+      minWidth: "200px", // Set minimum lebar kolom
+      wrap: true,
+    },
 
-    { 
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Username</span>
           <input
             type="text"
@@ -615,14 +616,21 @@ const Users = () => {
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.username = el)}
             onChange={(e) => handleInputChange("username", e.target.value)}
-            onFocus={() => setActiveInput('username')} // Set active input
+            onFocus={() => setActiveInput("username")} // Set active input
           />
         </div>
       ),
-      selector: (row) => row.username },
-    { 
+      selector: (row) => row.username,
+    },
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Imei</span>
           <input
             type="text"
@@ -630,14 +638,21 @@ const Users = () => {
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.imei = el)}
             onChange={(e) => handleInputChange("imei", e.target.value)}
-            onFocus={() => setActiveInput('imei')} // Set active input
+            onFocus={() => setActiveInput("imei")} // Set active input
           />
         </div>
       ),
-      selector: (row) => row.imei },
-    { 
+      selector: (row) => row.imei,
+    },
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Role</span>
           <input
             type="text"
@@ -645,15 +660,22 @@ const Users = () => {
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.role = el)}
             onChange={(e) => handleInputChange("role", e.target.value)}
-            onFocus={() => setActiveInput('role')} // Set active input
+            onFocus={() => setActiveInput("role")} // Set active input
           />
         </div>
-      ), 
-      selector: (row) => row.role },
+      ),
+      selector: (row) => row.role,
+    },
 
-    { 
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Job Title</span>
           <input
             type="text"
@@ -661,15 +683,22 @@ const Users = () => {
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.category_user = el)}
             onChange={(e) => handleInputChange("category_user", e.target.value)}
-            onFocus={() => setActiveInput('category_user')} // Set active input
+            onFocus={() => setActiveInput("category_user")} // Set active input
           />
         </div>
-      ), 
-      selector: (row) => row.category_user },
+      ),
+      selector: (row) => row.category_user,
+    },
 
-    { 
+    {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Atasan</span>
           <input
             type="text"
@@ -677,14 +706,21 @@ const Users = () => {
             className="form-control mt-1 filter-header"
             ref={(el) => (inputRefs.current.upline = el)}
             onChange={(e) => handleInputChange("upline", e.target.value)}
-            onFocus={() => setActiveInput('upline')} // Set active input
+            onFocus={() => setActiveInput("upline")} // Set active input
           />
         </div>
-      ), 
-      selector: (row) => row.upline },
+      ),
+      selector: (row) => row.upline,
+    },
     {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Photo</span>
           <input
             type="text"
@@ -723,7 +759,13 @@ const Users = () => {
     // { name: "Status", selector: (row) => row.enabled },
     {
       name: (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <span style={{ marginBottom: "6px" }}>Status</span>
           <input
             type="text"
@@ -741,16 +783,13 @@ const Users = () => {
       ),
     },
     {
-      name: (
-        <span style={{ marginBottom: "45px" }}>Action</span>
-      ),
+      name: <span style={{ marginBottom: "45px" }}>Action</span>,
       cell: (row) => (
         <div className="action-buttons">
           <button
             className="btn btn-gradient-warning btn-sm"
             onClick={() => handleUpdate(row)}
           >
-            
             Update
           </button>
           <button
@@ -761,7 +800,7 @@ const Users = () => {
           </button>
         </div>
       ),
-    }
+    },
   ];
   useEffect(() => {
     if (activeInput && inputRefs.current[activeInput]) {
@@ -791,7 +830,7 @@ const Users = () => {
                         <button
                           className="btn btn-gradient-primary btn-sm"
                           onClick={() => setAddModalVisible(true)}
-                          style={{marginBottom:"20px"}}
+                          style={{ marginBottom: "20px" }}
                         >
                           Tambah Karyawan
                         </button>
@@ -829,35 +868,42 @@ const Users = () => {
                       />
                     ) : (
                       <div className="table-responsive">
-                      <table className="table">
-                        <thead>
-                          <tr>
-                            {columns.map((col, index) => (
-                              <th key={index} style={{fontSize:"12px"}}>{col.name}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredUser.length > 0 ? (
-                            filteredUser.map((row, index) => (
-                              <tr key={index}>
-                                {columns.map((col, colIndex) => (
-                                  <td key={colIndex} >
-                                    {col.cell ? col.cell(row) : col.selector(row)}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))
-                          ) : (
+                        <table className="table">
+                          <thead>
                             <tr>
-                              <td colSpan={columns.length} style={{ textAlign: "center" }}>
-                                <em>No data found</em>
-                              </td>
+                              {columns.map((col, index) => (
+                                <th key={index} style={{ fontSize: "12px" }}>
+                                  {col.name}
+                                </th>
+                              ))}
                             </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {filteredUser.length > 0 ? (
+                              filteredUser.map((row, index) => (
+                                <tr key={index}>
+                                  {columns.map((col, colIndex) => (
+                                    <td key={colIndex}>
+                                      {col.cell
+                                        ? col.cell(row)
+                                        : col.selector(row)}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan={columns.length}
+                                  style={{ textAlign: "center" }}
+                                >
+                                  <em>No data found</em>
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </>
                 )}
